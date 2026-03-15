@@ -1,8 +1,11 @@
-using System;
 using UnityEngine;
+using Zenject;
+using Input = Scripts.Input;
 
 public class Player : MonoBehaviour
 {
+    [Inject] private Input _input;
+    
     [Header("CharacterController")]
     public CharacterController characterController;
     public float moveSpeed = 5f;
@@ -12,33 +15,21 @@ public class Player : MonoBehaviour
     
     [Header("Camera")]
     public Transform cameraTarget;
-    public float sensitivity = 0.15f;
+    public float mouseSensitivity = 0.15f;
+    public float gamepadSensitivity = 150f;  
     public float pitchMin = -80f;
     public float pitchMax = 80f;
     
-    private InputSystem_Actions _input;
     private float _pitch;
     private float _yaw;
 
     void Awake()
     {
-        _input = new InputSystem_Actions();
-        
         _yaw   = cameraTarget.eulerAngles.y;
         _pitch = cameraTarget.eulerAngles.x;
         
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible   = false;
-    }
-
-    void OnEnable()
-    {
-        _input.Enable();
-    }
-
-    void OnDisable()
-    {
-        _input.Disable();
     }
 
     private void Update()
@@ -53,7 +44,14 @@ public class Player : MonoBehaviour
 
     private void MoveCamera()
     {
-        Vector2 look = _input.Player.Look.ReadValue<Vector2>();
+        Vector2 look = _input.playerLook;
+
+        float sensitivity;
+        
+        if (!_input.isGamepad)
+            sensitivity = mouseSensitivity * _input.mouseSensitivityMultiplay;
+        else
+            sensitivity = gamepadSensitivity * _input.stickSensitivityMultiplay * Time.deltaTime;
 
         _yaw   += look.x * sensitivity;
         _pitch -= look.y * sensitivity;
@@ -71,7 +69,7 @@ public class Player : MonoBehaviour
             _velocityY = -2f;
 
         // Читаем WASD / стик
-        Vector2 move = _input.Player.Move.ReadValue<Vector2>();
+        Vector2 move = _input.playerMove;
 
         // Направление камеры по горизонтали (только yaw, без pitch)
         Quaternion camYaw = Quaternion.Euler(0f, _yaw, 0f);
@@ -81,7 +79,7 @@ public class Player : MonoBehaviour
         characterController.Move(dir * moveSpeed * Time.deltaTime);
 
         // Прыжок
-        if (_input.Player.Jump.WasPressedThisFrame() && isGrounded)
+        if (_input.isJump && isGrounded)
             _velocityY = Mathf.Sqrt(jumpHeight * -2f * gravity);
 
         // Гравитация
