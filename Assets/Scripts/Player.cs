@@ -1,10 +1,15 @@
+using System;
+using Scripts;
 using UnityEngine;
 using Zenject;
 using Input = Scripts.Input;
 
-public class Player : MonoBehaviour
+public class Player : MonoBehaviour, IRestart
 {
     [Inject] private Input _input;
+    
+    [Header("Base")]
+    public LifeTime lifeTime;
     
     [Header("CharacterController")]
     public CharacterController characterController;
@@ -30,6 +35,10 @@ public class Player : MonoBehaviour
         
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible   = false;
+
+        ResetOriginPositionAndRotation();
+        lifeTime.OnLifeTimeEnded += Restart;
+        lifeTime.StartLifeTimer();
     }
 
     private void Update()
@@ -40,6 +49,11 @@ public class Player : MonoBehaviour
     void FixedUpdate()
     {
         MoveCamera();
+    }
+
+    private void OnDestroy()
+    {
+        lifeTime.OnLifeTimeEnded -= Restart;
     }
 
     private void MoveCamera()
@@ -85,5 +99,27 @@ public class Player : MonoBehaviour
         // Гравитация
         _velocityY += gravity * Time.deltaTime;
         characterController.Move(new Vector3(0f, _velocityY, 0f) * Time.deltaTime);
+    }
+
+    private Vector3 _originPosition;
+    private Quaternion _originRotation;
+
+    private void ResetOriginPositionAndRotation()
+    {
+        _originPosition = transform.position;
+        _originRotation = transform.rotation;
+    }
+    
+    public void Restart()
+    {
+        characterController.enabled = false;
+    
+        transform.position = _originPosition;
+        transform.rotation = _originRotation;
+        _velocityY = 0f;
+    
+        characterController.enabled = true;
+        
+        lifeTime.RestartLifeTimer();
     }
 }
