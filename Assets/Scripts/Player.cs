@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using Scripts;
+using Unity.Mathematics;
 using UnityEngine;
 using Zenject;
 using Input = Scripts.Input;
@@ -8,8 +10,10 @@ public class Player : MonoBehaviour, IRestart
 {
     [Inject] private Input _input;
     
-    [Header("Base")]
+    [Header("References")]
     public LifeTime lifeTime;
+    public Animator animator;
+    public Transform render;
     
     [Header("CharacterController")]
     public CharacterController characterController;
@@ -36,6 +40,8 @@ public class Player : MonoBehaviour, IRestart
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible   = false;
 
+        animator.applyRootMotion = false;
+        
         ResetOriginPositionAndRotation();
         lifeTime.OnLifeTimeEnded += Restart;
         lifeTime.StartLifeTimer();
@@ -76,6 +82,9 @@ public class Player : MonoBehaviour, IRestart
     
     void PlayerController()
     {
+        if (!characterController.enabled) return;
+        if (_isAnimation) return;
+        
         bool isGrounded = characterController.isGrounded;
 
         // Сбрасываем вертикальную скорость когда стоим на земле
@@ -91,6 +100,13 @@ public class Player : MonoBehaviour, IRestart
         // Переводим input в мировое пространство относительно камеры
         Vector3 dir = camYaw * new Vector3(move.x, 0f, move.y);
         characterController.Move(dir * moveSpeed * Time.deltaTime);
+        
+        // Поворот игрока в сторону движения
+        if (dir.sqrMagnitude > 0.01f)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(dir);
+            render.rotation = Quaternion.Slerp(render.rotation, targetRotation, 15f * Time.deltaTime);
+        }
 
         // Прыжок
         if (_input.isJump && isGrounded)
@@ -100,6 +116,8 @@ public class Player : MonoBehaviour, IRestart
         _velocityY += gravity * Time.deltaTime;
         characterController.Move(new Vector3(0f, _velocityY, 0f) * Time.deltaTime);
     }
+
+    #region Restart
 
     private Vector3 _originPosition;
     private Quaternion _originRotation;
@@ -122,4 +140,65 @@ public class Player : MonoBehaviour, IRestart
         
         lifeTime.RestartLifeTimer();
     }
+
+    #endregion
+
+    #region Animations
+
+    private bool _isAnimation;
+    
+    private void OnAnimatorMove()
+    { 
+        if(!_isAnimation) return;
+        
+        animator.ApplyBuiltinRootMotion();
+    }
+    
+    private void Climb(Transform target)
+    {
+        var isLooksAt = Vector3.Dot(render.forward,  target.forward) > 0.5f;
+        var isPlayerHigher = render.position.y > target.position.y;
+        
+        if(!isLooksAt || isPlayerHigher) return;
+        
+        _isAnimation = true;
+        
+        characterController.enabled = false;
+        animator.CrossFade("Climb", 0.1f, 0);
+        
+        StartCoroutine(WaitAnimationEnd("Climb", () =>
+        {
+            characterController.enabled = true;
+            _isAnimation = false;
+        }));
+    }
+    
+    private IEnumerator WaitAnimationEnd(string animationName, Action onComplete = null)
+    {
+        yield return null;
+        while (!animator.GetCurrentAnimatorStateInfo(0).IsName(animationName))
+            yield return null;
+    
+        while (animator.GetCurrentAnimatorStateInfo(0).IsName(animationName) &&
+               animator.GetCurrentAnimatorStateInfo(0).normalizedTime < 1f)
+        {
+            yield return null;
+        }
+
+        onComplete?.Invoke();
+    }
+
+    #endregion
+
+    #region Collisions&Triggers
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Climb"))
+        {
+            Climb(other.transform);
+        }
+    }
+
+    #endregion
 }
