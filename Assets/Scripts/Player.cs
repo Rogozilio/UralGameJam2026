@@ -31,6 +31,8 @@ public class Player : MonoBehaviour, IRestart
     
     private float _pitch;
     private float _yaw;
+    private float _speedSlowdown = 1f;
+    private bool _disableJump;
 
     void Awake()
     {
@@ -99,7 +101,8 @@ public class Player : MonoBehaviour, IRestart
 
         // Переводим input в мировое пространство относительно камеры
         Vector3 dir = camYaw * new Vector3(move.x, 0f, move.y);
-        characterController.Move(dir * moveSpeed * Time.deltaTime);
+        var speed = moveSpeed * _speedSlowdown;
+        characterController.Move(dir * speed * Time.deltaTime);
         
         // Поворот игрока в сторону движения
         if (dir.sqrMagnitude > 0.01f)
@@ -109,7 +112,7 @@ public class Player : MonoBehaviour, IRestart
         }
 
         // Прыжок
-        if (_input.isJump && isGrounded)
+        if (_input.isJump && isGrounded && !_disableJump)
             _velocityY = Mathf.Sqrt(jumpHeight * -2f * gravity);
 
         // Гравитация
@@ -139,6 +142,9 @@ public class Player : MonoBehaviour, IRestart
         characterController.enabled = true;
         
         lifeTime.RestartLifeTimer();
+
+        _speedSlowdown = 1f;
+        _disableJump = false;
     }
 
     #endregion
@@ -197,6 +203,29 @@ public class Player : MonoBehaviour, IRestart
         if (other.CompareTag("Climb"))
         {
             Climb(other.transform);
+        }
+        else if (other.CompareTag("Slowdown"))
+        {
+            _speedSlowdown = 0.4f;
+            _disableJump = true;
+        }
+    }
+
+    private void OnTriggerStay(Collider other)
+    {
+        if (other.CompareTag("Slowdown"))
+        {
+            _speedSlowdown = 0.4f;
+            _disableJump = true;
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("Slowdown"))
+        {
+            _speedSlowdown = 1f;
+            _disableJump = false;
         }
     }
 
