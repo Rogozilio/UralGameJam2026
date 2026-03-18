@@ -34,6 +34,9 @@ public class Player : MonoBehaviour, IRestart
     private float _speedSlowdown = 1f;
     private bool _disableJump;
 
+    [SerializeField]
+    private bool isIdleFire;
+
     void Awake()
     {
         _yaw   = cameraTarget.eulerAngles.y;
@@ -51,12 +54,10 @@ public class Player : MonoBehaviour, IRestart
 
     private void Update()
     {
-        PlayerController();
-    }
-
-    void FixedUpdate()
-    {
         MoveCamera();
+        PlayerController();
+        
+        animator.SetBool("isIdleFire", isIdleFire);
     }
 
     private void OnDestroy()
@@ -71,7 +72,7 @@ public class Player : MonoBehaviour, IRestart
         float sensitivity;
         
         if (!_input.isGamepad)
-            sensitivity = mouseSensitivity * _input.mouseSensitivityMultiplay;
+            sensitivity = mouseSensitivity * _input.mouseSensitivityMultiplay * Time.deltaTime;
         else
             sensitivity = gamepadSensitivity * _input.stickSensitivityMultiplay * Time.deltaTime;
 
@@ -107,17 +108,20 @@ public class Player : MonoBehaviour, IRestart
         // Поворот игрока в сторону движения
         if (dir.sqrMagnitude > 0.01f)
         {
-            Quaternion targetRotation = Quaternion.LookRotation(dir);
+            Quaternion targetRotation = Quaternion.LookRotation(dir) * Quaternion.Euler(270f, 90f, 0f);
             render.rotation = Quaternion.Slerp(render.rotation, targetRotation, 15f * Time.deltaTime);
         }
 
         // Прыжок
         if (_input.isJump && isGrounded && !_disableJump)
             _velocityY = Mathf.Sqrt(jumpHeight * -2f * gravity);
-
+        
         // Гравитация
         _velocityY += gravity * Time.deltaTime;
         characterController.Move(new Vector3(0f, _velocityY, 0f) * Time.deltaTime);
+        
+        animator.SetBool("isJump", !isGrounded);
+        animator.SetInteger("move", move.magnitude > 0 ? 1 : 0);
     }
 
     #region Restart
@@ -160,10 +164,13 @@ public class Player : MonoBehaviour, IRestart
         animator.ApplyBuiltinRootMotion();
     }
     
-    private void Climb(Transform target)
+    private void Climb(ClimbData target)
     {
-        var isLooksAt = Vector3.Dot(render.forward,  target.forward) > 0.5f;
-        var isPlayerHigher = render.position.y > target.position.y;
+        // if(!target.isActive) return;
+        // target.isActive = false;
+        
+        var isLooksAt = Vector3.Dot(-render.right, target.transform.forward) > 0.5f;
+        var isPlayerHigher = render.position.y > target.transform.position.y;
         
         if(!isLooksAt || isPlayerHigher) return;
         
@@ -171,11 +178,17 @@ public class Player : MonoBehaviour, IRestart
         
         characterController.enabled = false;
         animator.CrossFade("Climb", 0.1f, 0);
+        transform.position = target.GetPointStartClimb(transform);
+        render.rotation = target.startClimb.rotation *  Quaternion.Euler(270, 90f, 0f);
         
         StartCoroutine(WaitAnimationEnd("Climb", () =>
         {
-            characterController.enabled = true;
             _isAnimation = false;
+            _disableJump = false;
+            transform.position = target.GetPointFinishClimb(transform);
+            _velocityY = 0f;
+            characterController.enabled = true;
+            animator.SetTrigger("isClimb");
         }));
     }
     
@@ -202,7 +215,7 @@ public class Player : MonoBehaviour, IRestart
     {
         if (other.CompareTag("Climb"))
         {
-            Climb(other.transform);
+            Climb(other.GetComponent<ClimbData>());
         }
         else if (other.CompareTag("Slowdown"))
         {
