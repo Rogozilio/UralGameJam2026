@@ -78,7 +78,7 @@ Material:
     - _DistortionMaskEroSmoothness: 1
     - _DistortionVertical: -1
     - _Dst: 10
-    - _Emissive: 5
+    - _Emissive: 9.6
     - _EnableRandomRotation: 0
     - _Erosion: 0
     - _ErosionSmoothness: 1
@@ -95,8 +95,8 @@ Material:
     - _NoisesTertiaryDistortionIntensity: 0.3
     - _NoisesTileHorizontal: 1
     - _NoisesTileVertical: 1
-    - _OverallScale: 1
-    - _OverallSpeed: 1
+    - _OverallScale: 0.28
+    - _OverallSpeed: 0.28
     - _QueueControl: 0
     - _QueueOffset: 0
     - _ReceiveShadows: 1
@@ -114,3 +114,4 @@ Material:
     - _Noises03Scale: {r: 0.5, g: 1, b: 0, a: 0}
     - _Noises03Speed: {r: 0.067, g: -0.67, b: 0, a: 0}
   m_BuildTextureStacks: []
+  m_AllowLocking: 1

@@ -19,6 +19,9 @@ namespace Scripts
 
         public void StartLifeTimer()
         {
+            shapeController.fire.Stop();
+            shapeController.fire.Clear();
+            shapeController.fire.Play();
             _remainingTime = time;
             _lifeCoroutine = StartCoroutine(LifeTimerCoroutine());
         }

@@ -123,7 +123,7 @@ Material:
     - _GradientCenterY: 0
     - _GradientEnabled: 0
     - _GradientEnd: 0.55
-    - _GradientFill: 1
+    - _GradientFill: 0.586
     - _GradientInvert: 0
     - _GradientSize: 9.51
     - _GradientSoftness: 0.1
