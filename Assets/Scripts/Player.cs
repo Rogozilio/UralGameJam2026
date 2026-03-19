@@ -29,6 +29,11 @@ public class Player : MonoBehaviour, IRestart
     public float pitchMin = -80f;
     public float pitchMax = 80f;
     
+    [Header("Coyote Time")]
+    public float coyoteTime = 0.15f;
+    private float _coyoteTimeCounter;
+    private bool _wasGrounded;
+    
     private float _pitch;
     private float _yaw;
     private float _speedSlowdown = 1f;
@@ -87,39 +92,40 @@ public class Player : MonoBehaviour, IRestart
     {
         if (!characterController.enabled) return;
         if (_isAnimation) return;
-        
+    
         bool isGrounded = characterController.isGrounded;
 
-        // Сбрасываем вертикальную скорость когда стоим на земле
+        // Coyote time: считаем вниз, пока игрок был на земле, но уже сошёл
+        if (isGrounded)
+            _coyoteTimeCounter = coyoteTime;
+        else
+            _coyoteTimeCounter -= Time.deltaTime;
+
         if (isGrounded && _velocityY < 0f)
             _velocityY = -2f;
 
-        // Читаем WASD / стик
         Vector2 move = _input.playerMove;
-
-        // Направление камеры по горизонтали (только yaw, без pitch)
         Quaternion camYaw = Quaternion.Euler(0f, _yaw, 0f);
-
-        // Переводим input в мировое пространство относительно камеры
         Vector3 dir = camYaw * new Vector3(move.x, 0f, move.y);
         var speed = moveSpeed * _speedSlowdown;
         characterController.Move(dir * speed * Time.deltaTime);
-        
-        // Поворот игрока в сторону движения
+    
         if (dir.sqrMagnitude > 0.01f)
         {
             Quaternion targetRotation = Quaternion.LookRotation(dir) * Quaternion.Euler(270f, 90f, 0f);
             render.rotation = Quaternion.Slerp(render.rotation, targetRotation, 15f * Time.deltaTime);
         }
 
-        // Прыжок
-        if (_input.isJump && isGrounded && !_disableJump)
+        // Прыжок с coyote time: прыгаем, пока счётчик > 0 (даже если уже в воздухе)
+        if (_input.isJump && _coyoteTimeCounter > 0f && !_disableJump)
+        {
             _velocityY = Mathf.Sqrt(jumpHeight * -2f * gravity);
-        
-        // Гравитация
+            _coyoteTimeCounter = 0f; // сбрасываем, чтобы прыгнуть только раз
+        }
+
         _velocityY += gravity * Time.deltaTime;
         characterController.Move(new Vector3(0f, _velocityY, 0f) * Time.deltaTime);
-        
+    
         animator.SetBool("isJump", !isGrounded);
         animator.SetInteger("move", move.magnitude > 0 ? 1 : 0);
     }
@@ -149,6 +155,7 @@ public class Player : MonoBehaviour, IRestart
 
         _speedSlowdown = 1f;
         _disableJump = false;
+        _coyoteTimeCounter = 0f;
     }
 
     #endregion

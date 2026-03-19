@@ -4713,6 +4713,7 @@ GameObject:
   - component: {fileID: 1142242457}
   - component: {fileID: 1142242458}
   - component: {fileID: 1142242460}
+  - component: {fileID: 1142242462}
   - component: {fileID: 1142242459}
   - component: {fileID: 1142242461}
   m_Layer: 0
@@ -4803,6 +4804,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Scripts.LifeTime
   time: 30
   text: {fileID: 913616637}
+  shapeController: {fileID: 1142242462}
 --- !u!95 &1142242461
 Animator:
   serializedVersion: 7
@@ -4825,6 +4827,20 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &1142242462
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1142242456}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 06cb9c5d891a4809994c06747010d8da, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Scripts.BlendShapeController
+  skinnedMeshRenderer: {fileID: 6134192171472000727}
+  blendValue: 0
 --- !u!1 &1188088026 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1550504056418410719, guid: 5851f8b9d8f1ce34d94d7ae0dd534845, type: 3}
@@ -5409,7 +5425,7 @@ Transform:
   m_GameObject: {fileID: 1485475192}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.586, z: -0.643}
+  m_LocalPosition: {x: 0, y: 0.656, z: -0.643}
   m_LocalScale: {x: 0.9808664, y: 0.1648363, z: 0.13610956}
   m_ConstrainProportionsScale: 0
   m_Children: []
