@@ -34,6 +34,7 @@ public class Player : MonoBehaviour, IRestart
     private float _coyoteTimeCounter;
     private bool _wasGrounded;
     
+    [HideInInspector] public bool isOnPlatform; 
     private float _pitch;
     private float _yaw;
     private float _speedSlowdown = 1f;
@@ -103,7 +104,7 @@ public class Player : MonoBehaviour, IRestart
         if (!characterController.enabled) return;
         if (_isAnimation) return;
     
-        bool isGrounded = characterController.isGrounded;
+        bool isGrounded = characterController.isGrounded || (isOnPlatform && _velocityY <= 0f);
 
         // Coyote time: считаем вниз, пока игрок был на земле, но уже сошёл
         if (isGrounded)
