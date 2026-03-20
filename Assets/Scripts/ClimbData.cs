@@ -16,20 +16,20 @@ namespace Scripts
         {
             var localPlayerPoint = startClimb.InverseTransformPoint(player.position);
 
-            var x = Math.Clamp(localPlayerPoint.x, startClimb.position.x - rangeClimb,
-                startClimb.position.x + rangeClimb);
+            var x = Math.Clamp(localPlayerPoint.x, startClimb.localPosition.x - rangeClimb,
+                startClimb.localPosition.x + rangeClimb);
             
-            return new Vector3(x, startClimb.position.y, startClimb.position.z);
+            return startClimb.TransformPoint(new Vector3(x, 0f, 0f));
         }
         
         public Vector3 GetPointFinishClimb(Transform player)
         {
             var localPlayerPoint = finishClimb.InverseTransformPoint(player.position);
 
-            var x = Math.Clamp(localPlayerPoint.x, finishClimb.position.x - rangeClimb,
-                finishClimb.position.x + rangeClimb);
+            var x = Math.Clamp(localPlayerPoint.x, finishClimb.localPosition.x - rangeClimb,
+                finishClimb.localPosition.x + rangeClimb);
             
-            return new Vector3(x, finishClimb.position.y, finishClimb.position.z);
+            return finishClimb.TransformPoint(new Vector3(x, 0f, 0f));
         }
         
         private void OnDrawGizmos()
