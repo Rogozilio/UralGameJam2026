@@ -42,6 +42,16 @@ public class Player : MonoBehaviour, IRestart
     [SerializeField]
     private bool isIdleFire;
 
+    public Transform tempPointMove;
+    
+    public bool isMove => _input.playerMove.magnitude > 0;
+
+    public bool SetIsPushAnim
+    {
+        set => animator.SetBool("isPush", value);
+        get => animator.GetBool("isPush");
+    }
+
     void Awake()
     {
         _yaw   = cameraTarget.eulerAngles.y;
@@ -114,6 +124,7 @@ public class Player : MonoBehaviour, IRestart
         {
             Quaternion targetRotation = Quaternion.LookRotation(dir) * Quaternion.Euler(270f, 90f, 0f);
             render.rotation = Quaternion.Slerp(render.rotation, targetRotation, 15f * Time.deltaTime);
+            tempPointMove.rotation = Quaternion.Slerp(tempPointMove.rotation, targetRotation, 15f * Time.deltaTime);
         }
 
         // Прыжок с coyote time: прыгаем, пока счётчик > 0 (даже если уже в воздухе)
@@ -125,6 +136,9 @@ public class Player : MonoBehaviour, IRestart
 
         _velocityY += gravity * Time.deltaTime;
         characterController.Move(new Vector3(0f, _velocityY, 0f) * Time.deltaTime);
+
+        tempPointMove.position = transform.position;
+      
     
         animator.SetBool("isJump", !isGrounded);
         animator.SetInteger("move", move.magnitude > 0 ? 1 : 0);
