@@ -1500,7 +1500,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &320181981
 Transform:
   m_ObjectHideFlags: 0
@@ -2947,6 +2947,8 @@ MonoBehaviour:
   pushPoint: {fileID: 606067056}
   rangeClimb: 0.26
   pushSpeed: 1
+  useMoveLimit: 1
+  moveLimit: 2
 --- !u!65 &529948474
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -4418,6 +4420,8 @@ MonoBehaviour:
   pushPoint: {fileID: 2100527191}
   rangeClimb: 0.26
   pushSpeed: 1
+  useMoveLimit: 1
+  moveLimit: 2
 --- !u!65 &767064312
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -7899,6 +7903,8 @@ MonoBehaviour:
   pushPoint: {fileID: 724025209}
   rangeClimb: 0.26
   pushSpeed: 1
+  useMoveLimit: 1
+  moveLimit: 2.2
 --- !u!65 &1210909233
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -10708,6 +10714,8 @@ MonoBehaviour:
   pushPoint: {fileID: 1484751915}
   rangeClimb: 0.26
   pushSpeed: 1
+  useMoveLimit: 1
+  moveLimit: 2
 --- !u!65 &1893033371
 BoxCollider:
   m_ObjectHideFlags: 0
