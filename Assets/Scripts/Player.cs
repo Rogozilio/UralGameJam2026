@@ -64,7 +64,7 @@ public class Player : MonoBehaviour, IRestart
         animator.applyRootMotion = false;
         
         ResetOriginPositionAndRotation();
-        lifeTime.OnLifeTimeEnded += Restart;
+        lifeTime.OnLifeTimeEnded += RestartNow;
         lifeTime.StartLifeTimer();
     }
 
@@ -78,7 +78,7 @@ public class Player : MonoBehaviour, IRestart
 
     private void OnDestroy()
     {
-        lifeTime.OnLifeTimeEnded -= Restart;
+        lifeTime.OnLifeTimeEnded -= RestartNow;
     }
 
     private void MoveCamera()
@@ -154,6 +154,11 @@ public class Player : MonoBehaviour, IRestart
     {
         _originPosition = transform.position;
         _originRotation = transform.rotation;
+    }
+
+    private void RestartNow()
+    {
+        RestartSystem.Restart();
     }
     
     public void Restart()
