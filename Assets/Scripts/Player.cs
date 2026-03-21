@@ -203,6 +203,7 @@ public class Player : MonoBehaviour, IRestart
         
         _isAnimation = true;
         
+        lifeTime.PauseLifeTimer();
         characterController.enabled = false;
         animator.CrossFade("Climb", 0.1f, 0);
         transform.position = target.GetPointStartClimb(transform);
@@ -215,6 +216,7 @@ public class Player : MonoBehaviour, IRestart
             transform.position = target.GetPointFinishClimb(transform);
             _velocityY = 0f;
             characterController.enabled = true;
+            lifeTime.ResumeLifeTimer();
             animator.SetTrigger("isClimb");
         }));
     }
