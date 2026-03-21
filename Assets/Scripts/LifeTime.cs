@@ -9,6 +9,7 @@ namespace Scripts
     {
         public float time;
         public TextMeshProUGUI text;
+        public BlendShapeController shapeController;
 
         public event Action OnLifeTimeEnded;
 
@@ -18,6 +19,9 @@ namespace Scripts
 
         public void StartLifeTimer()
         {
+            shapeController.fire.Stop();
+            shapeController.fire.Clear();
+            shapeController.fire.Play();
             _remainingTime = time;
             _lifeCoroutine = StartCoroutine(LifeTimerCoroutine());
         }
@@ -56,6 +60,8 @@ namespace Scripts
             while (_remainingTime > 0f)
             {
                 text.text = _remainingTime.ToString("00");
+
+                shapeController.blendValue = 1f - _remainingTime / time;
                 
                 if (!_isPaused)
                     _remainingTime -= Time.deltaTime;

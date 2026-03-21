@@ -1206,24 +1206,15 @@ MonoBehaviour:
   render: {fileID: 5370739811727889520}
   characterController: {fileID: 8654644363852422495}
   moveSpeed: 2.2
-  airControlMultiplier: 0.85
-  jumpForce: 3.85
-  baseGravity: -14.5
-  fallGravityMultiplier: 1.28
-  lowJumpMultiplier: 3
-  coyoteTime: 0.12
-  jumpBufferTime: 0.12
-  maxFallSpeed: 6.84
-  groundedSnapVelocity: -2
+  jumpHeight: 0.5
+  gravity: -20
   cameraTarget: {fileID: 0}
   mouseSensitivity: 10
   gamepadSensitivity: 150
   pitchMin: -30
   pitchMax: 50
+  coyoteTime: 0.12
   isIdleFire: 1
-  legacyJumpHeight: 0.5
-  legacyGravity: -20
-  jumpSettingsMigrated: 0
 --- !u!114 &4246107489422206723
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1236,8 +1227,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 370a119e58fb48629819f83650235a2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Scripts.LifeTime
-  duration: 30
-  timerText: {fileID: 0}
+  time: 30
+  text: {fileID: 0}
+  shapeController: {fileID: 0}
 --- !u!143 &8654644363852422495
 CharacterController:
   m_ObjectHideFlags: 0
