@@ -1,8 +1,15 @@
 fileFormatVersion: 2
 guid: 51da021ae20f3e34b948e7ab0d5046d1
+AssetOrigin:
+  serializedVersion: 1
+  productId: 299224
+  packageName: Candle VFX - URP
+  packageVersion: 1.0.01
+  assetPath: Assets/Vefects/Candle VFX URP/Audio/SFX_Vefects_Candle_Crackling_Loop_01.wav
+  uploadId: 708942
 AudioImporter:
   externalObjects: {}
-  serializedVersion: 7
+  serializedVersion: 8
   defaultSettings:
     serializedVersion: 2
     loadType: 0
@@ -11,7 +18,7 @@ AudioImporter:
     compressionFormat: 1
     quality: 1
     conversionMode: 0
-    preloadAudioData: 0
+    preloadAudioData: 1
   platformSettingOverrides: {}
   forceToMono: 0
   normalize: 1
@@ -21,10 +28,3 @@ AudioImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 299224
-  packageName: Candle VFX - URP
-  packageVersion: 1.0.01
-  assetPath: Assets/Vefects/Candle VFX URP/Audio/SFX_Vefects_Candle_Crackling_Loop_01.wav
-  uploadId: 708942

@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Scripts
 {
-    public class PlatformUp : MonoBehaviour
+    public class PlatformUp : MonoBehaviour, IRestart
     {
          public Transform target;
         public float speed = 0.5f;
@@ -104,6 +104,11 @@ namespace Scripts
             // Вертикальная линия между min и max
             Gizmos.color = Color.yellow;
             Gizmos.DrawLine(minPos, maxPos);
+        }
+
+        public void Restart()
+        {
+            _isUp = false;
         }
     }
 }

@@ -11,15 +11,22 @@ namespace Scripts
         public float rangeClimb = 0.5f;
         public float pushSpeed = 1f;
 
+        [Header("Movement Limit")]
+        public bool useMoveLimit = true;
+        public float moveLimit = 2f;
+
         private bool _isPushing;
 
         private Player _player;
         private bool _isBegin = true;
         private float _posX;
 
+        private Vector3 _startTargetPosition;
+
         private void Start()
         {
             _player = FindObjectOfType<Player>();
+            _startTargetPosition = target.position;
         }
 
         private void Update()
@@ -32,15 +39,30 @@ namespace Scripts
 
             if (!_player.isMove) return;
 
+            if (useMoveLimit)
+            {
+                float movedDistance = Vector3.Distance(_startTargetPosition, target.position);
+                if (movedDistance >= moveLimit) return;
+            }
+
             target.position += pushPoint.forward * pushSpeed * Time.deltaTime;
+
+            if (useMoveLimit)
+            {
+                float movedDistance = Vector3.Distance(_startTargetPosition, target.position);
+                if (movedDistance > moveLimit)
+                {
+                    target.position = _startTargetPosition + pushPoint.forward.normalized * moveLimit;
+                }
+            }
         }
 
         private void LateUpdate()
         {
-            if(!_isPushing) return;
-            
+            if (!_isPushing) return;
+
             _player.SetIsPushAnim = false;
-            
+
             if (!_isPushing)
             {
                 _isBegin = true;
@@ -60,9 +82,9 @@ namespace Scripts
                 _isBegin = true;
                 return;
             }
-            
+
             _player.transform.position = GetPointForPush(_player.transform, _isBegin);
-            _player.render.rotation = pushPoint.rotation * Quaternion.Euler(270, 90f, 0f);;
+            _player.render.rotation = pushPoint.rotation * Quaternion.Euler(270, 90f, 0f);
             _player.SetIsPushAnim = true;
             _isBegin = false;
         }
@@ -94,14 +116,30 @@ namespace Scripts
         {
             if (pushPoint == null) return;
 
+            // --- Зона захвата игрока (зелёная) ---
             Gizmos.color = Color.green;
 
             Vector3 leftStart = pushPoint.TransformPoint(new Vector3(-rangeClimb, 0f, 0f));
             Vector3 rightStart = pushPoint.TransformPoint(new Vector3(rangeClimb, 0f, 0f));
 
-            Gizmos.DrawSphere(leftStart, 0.01f);
-            Gizmos.DrawSphere(rightStart, 0.01f);
+            Gizmos.DrawSphere(leftStart, 0.04f);
+            Gizmos.DrawSphere(rightStart, 0.04f);
             Gizmos.DrawLine(leftStart, rightStart);
+
+            if (!useMoveLimit) return;
+
+            // --- Предел движения (жёлтая линия и точка конца) ---
+            Vector3 limitEnd = pushPoint.position + pushPoint.forward.normalized * moveLimit;
+
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawLine(pushPoint.position, limitEnd);
+            Gizmos.DrawSphere(limitEnd, 0.06f);
+
+#if UNITY_EDITOR
+            // Подпись с дистанцией
+            UnityEditor.Handles.color = Color.yellow;
+            UnityEditor.Handles.Label(limitEnd + Vector3.up * 0.15f, $"Limit: {moveLimit:F1}m");
+#endif
         }
     }
 }
