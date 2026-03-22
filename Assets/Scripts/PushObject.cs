@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Scripts
 {
@@ -14,6 +15,8 @@ namespace Scripts
         [Header("Movement Limit")]
         public bool useMoveLimit = true;
         public float moveLimit = 2f;
+
+        [Space] public UnityEvent actionPushToEnd;
 
         private bool _isPushing;
 
@@ -42,7 +45,12 @@ namespace Scripts
             if (useMoveLimit)
             {
                 float movedDistance = Vector3.Distance(_startTargetPosition, target.position);
-                if (movedDistance >= moveLimit) return;
+                if (movedDistance >= moveLimit)
+                {
+                    actionPushToEnd?.Invoke();
+                    _player.SetIsPushAnim = false;
+                    return;
+                }
             }
 
             target.position += pushPoint.forward * pushSpeed * Time.deltaTime;
@@ -53,6 +61,8 @@ namespace Scripts
                 if (movedDistance > moveLimit)
                 {
                     target.position = _startTargetPosition + pushPoint.forward.normalized * moveLimit;
+                    _player.SetIsPushAnim = false;
+                    actionPushToEnd?.Invoke();
                 }
             }
         }
