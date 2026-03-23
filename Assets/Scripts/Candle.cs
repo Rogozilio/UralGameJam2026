@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Scripts
 {
@@ -10,6 +11,8 @@ namespace Scripts
         public AudioSource audioSource;
 
         private bool _isActive;
+
+        public UnityEvent onFire;
 
         public void FireCandle()
         {
@@ -24,6 +27,8 @@ namespace Scripts
             audioSource.Play();
             
             _isActive = true;
+            
+            onFire?.Invoke();
         }
 
         private void OnTriggerEnter(Collider other)

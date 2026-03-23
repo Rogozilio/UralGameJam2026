@@ -9,9 +9,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1305637787667884368}
+  - component: {fileID: 542216086600504782}
   - component: {fileID: 3239394457147088331}
   - component: {fileID: 7463265992174281387}
-  - component: {fileID: 542216086600504782}
   - component: {fileID: 8491344822852468238}
   - component: {fileID: 598486567382919246}
   m_Layer: 0
@@ -41,6 +41,27 @@ Transform:
   - {fileID: 8676269824177071327}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &542216086600504782
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7477668646854574647}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66c93fcd78f24ae084cf54e2a82120d8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Scripts.Candle
+  particles:
+  - {fileID: 3239394457147088331}
+  - {fileID: 576365803248427441}
+  - {fileID: 7865924248191967263}
+  light: {fileID: 1447273365782035309}
+  audioSource: {fileID: 4960121610259339895}
+  onFire:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!198 &3239394457147088331
 ParticleSystem:
   m_ObjectHideFlags: 0
@@ -4844,24 +4865,6 @@ ParticleSystemRenderer:
   m_MeshWeighting2: 1
   m_MeshWeighting3: 1
   m_MaskInteraction: 0
---- !u!114 &542216086600504782
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7477668646854574647}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 66c93fcd78f24ae084cf54e2a82120d8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Scripts.Candle
-  particles:
-  - {fileID: 3239394457147088331}
-  - {fileID: 576365803248427441}
-  - {fileID: 7865924248191967263}
-  light: {fileID: 1447273365782035309}
-  audioSource: {fileID: 4960121610259339895}
 --- !u!135 &8491344822852468238
 SphereCollider:
   m_ObjectHideFlags: 0
