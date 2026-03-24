@@ -1,7 +1,7 @@
 using System;
 using System.Collections;
 using Scripts;
-using Unity.Mathematics;
+using Unity.Cinemachine;
 using UnityEngine;
 using Zenject;
 using Input = Scripts.Input;
@@ -28,6 +28,20 @@ public class Player : MonoBehaviour, IRestart
     public float gamepadSensitivity = 150f;  
     public float pitchMin = -80f;
     public float pitchMax = 80f;
+    
+    [Header("Camera Modes")]
+    public bool isStaticCamera = false;
+    public Transform staticCameraTransform;
+    public CinemachineCamera nextCamera;
+
+    public bool IsStaticCamera
+    {
+        set
+        {
+            isStaticCamera = value;
+            nextCamera.Priority = value ? 1 : -1;
+        }
+    }
     
     [Header("Coyote Time")]
     public float coyoteTime = 0.15f;
@@ -116,7 +130,9 @@ public class Player : MonoBehaviour, IRestart
             _velocityY = -2f;
 
         Vector2 move = _input.playerMove;
-        Quaternion camYaw = Quaternion.Euler(0f, _yaw, 0f);
+        Quaternion camYaw = isStaticCamera
+            ? Quaternion.Euler(0f, staticCameraTransform.eulerAngles.y, 0f)
+            : Quaternion.Euler(0f, _yaw, 0f);
         Vector3 dir = camYaw * new Vector3(move.x, 0f, move.y);
         var speed = moveSpeed * _speedSlowdown;
         characterController.Move(dir * speed * Time.deltaTime);
@@ -176,6 +192,7 @@ public class Player : MonoBehaviour, IRestart
         _speedSlowdown = 1f;
         _disableJump = false;
         _coyoteTimeCounter = 0f;
+        IsStaticCamera = false;
     }
 
     #endregion

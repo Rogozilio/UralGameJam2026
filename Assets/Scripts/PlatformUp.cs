@@ -19,6 +19,13 @@ namespace Scripts
         private Vector3 _lastPosition;
         private Player _player;
 
+        public bool isCancelRestart;
+        
+        public bool IsUp
+        {
+            set =>  _isUp = value;
+        }
+
         private void Awake()
         {
             _originPosition = target.position;
@@ -108,6 +115,8 @@ namespace Scripts
 
         public void Restart()
         {
+            if(isCancelRestart)  return;
+            
             _isUp = false;
         }
     }
