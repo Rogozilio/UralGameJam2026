@@ -1,5 +1,3 @@
-using System;
-using Unity.Mathematics;
 using UnityEngine;
 
 namespace Scripts
@@ -14,7 +12,6 @@ namespace Scripts
         public float maxY = 5f;
 
         private bool _isUp;
-        private Vector3 _originPosition;
         private CharacterController _playerController;
         private Vector3 _lastPosition;
         private Player _player;
@@ -25,10 +22,17 @@ namespace Scripts
         {
             set =>  _isUp = value;
         }
+        
+        public float NormalizedHeight
+        {
+            get
+            {
+                return Mathf.InverseLerp(minY, maxY, target.position.y);
+            }
+        }
 
         private void Awake()
         {
-            _originPosition = target.position;
             _lastPosition = target.position;
         }
 
