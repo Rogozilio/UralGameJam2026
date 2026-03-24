@@ -1913,7 +1913,7 @@ Shader "Vefects/SH_Vefects_URP_VFX_Opaque_Fr_01"
 				float2 texCoord113 = input.ase_texcoord4.xy * float2( 1,1 ) + float2( 0,0 );
 				float smoothstepResult114 = smoothstep( 0.5 , ( 0.5 + 0.5 ) , ( ( texCoord113.y * ( 1.0 - texCoord113.y ) ) * 4.0 ));
 				float temp_output_64_0 = saturate( ( saturate( ( saturate( fresnelNode95 ) * _FresnelIntensity ) ) + saturate( ( saturate( ( saturate( fresnelNode103 ) * _Fresnel02Intensity ) ) * saturate( ( saturate( dotResult56 ) * saturate( smoothstepResult114 ) ) ) ) ) ) );
-				float gradientCoord = saturate( input.ase_texcoord7.y );
+				float gradientCoord = saturate( input.ase_texcoord4.y );
 				#ifdef _GRADIENT_OBJECTSPACE_ON
 				float objectSpaceY = mul( GetWorldToObjectMatrix(), float4( PositionWS, 1.0 ) ).y;
 				gradientCoord = saturate( ( objectSpaceY - _GradientObjectMinY ) / max( 0.0001, ( _GradientObjectMaxY - _GradientObjectMinY ) ) );
