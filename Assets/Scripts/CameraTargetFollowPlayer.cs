@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Scripts
 {
-    public class CameraTargetFollowPlayer : MonoBehaviour
+    public class CameraTargetFollowPlayer : MonoBehaviour, IRestart
     {
         public Transform target;
 
@@ -31,6 +31,11 @@ namespace Scripts
                 target.position = _originPosition;
                 other.GetComponent<Player>().IsStaticCamera = false;
             }
+        }
+
+        public void Restart()
+        {
+            target.position = _originPosition;
         }
     }
 }
