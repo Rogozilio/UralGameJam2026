@@ -74,7 +74,7 @@ Shader "GapperGames/Volumetric_Water"
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/ShaderGraphFunctions.hlsl"
         //#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DBuffer.hlsl"
-        //#include "Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/Includes/ShaderPass.hlsl"
+        #include "Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/Includes/ShaderPass.hlsl"
 
     struct Attributes
     {

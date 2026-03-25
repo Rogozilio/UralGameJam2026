@@ -24,6 +24,8 @@ public class UIMenu : MonoBehaviour
     public Slider volumeCutscene;
 
     public float GetMouseSens => mouseSensitivity.value;
+    
+    public event Action OnResumed;
 
     private void Awake()
     {
@@ -89,6 +91,7 @@ public class UIMenu : MonoBehaviour
         
         // Заблокировать курсор в центре экрана (опционально)
         Cursor.lockState = CursorLockMode.None;
+        Time.timeScale = 0f;
     }
     
     public void Hide()
@@ -98,6 +101,8 @@ public class UIMenu : MonoBehaviour
         // Заблокировать курсор в центре экрана (опционально)
         Cursor.lockState = CursorLockMode.Locked;
         mainPanel.SetActive(false);
+        Time.timeScale = 1f;
+        OnResumed?.Invoke();
     }
 
     private void HideOrShow()

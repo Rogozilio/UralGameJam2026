@@ -4,7 +4,7 @@ using UnityEngine.Events;
 
 namespace Scripts
 {
-    public class PushObject : MonoBehaviour
+    public class PushObject : MonoBehaviour, IRestart
     {
         public Transform target;
 
@@ -93,9 +93,14 @@ namespace Scripts
                 return;
             }
 
-            _player.transform.position = GetPointForPush(_player.transform, _isBegin);
+            Vector3 targetPos = GetPointForPush(_player.transform, _isBegin);
+    
+            // Двигаем через CharacterController, а не transform.position напрямую
+            Vector3 delta = targetPos - _player.transform.position;
+            _player.characterController.Move(delta);
             _player.render.rotation = pushPoint.rotation * Quaternion.Euler(270, 90f, 0f);
             _player.SetIsPushAnim = true;
+            _player.animator.SetBool("isJump", false);
             _isBegin = false;
         }
 
@@ -150,6 +155,13 @@ namespace Scripts
             UnityEditor.Handles.color = Color.yellow;
             UnityEditor.Handles.Label(limitEnd + Vector3.up * 0.15f, $"Limit: {moveLimit:F1}m");
 #endif
+        }
+
+        public void Restart()
+        {
+            _isPushing = false;
+            _player.SetIsPushAnim = false;
+            _isBegin = true;
         }
     }
 }
