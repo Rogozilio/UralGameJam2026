@@ -4,7 +4,7 @@ using UnityEngine.Events;
 
 namespace Scripts
 {
-    public class PushObject : MonoBehaviour
+    public class PushObject : MonoBehaviour, IRestart
     {
         public Transform target;
 
@@ -155,6 +155,13 @@ namespace Scripts
             UnityEditor.Handles.color = Color.yellow;
             UnityEditor.Handles.Label(limitEnd + Vector3.up * 0.15f, $"Limit: {moveLimit:F1}m");
 #endif
+        }
+
+        public void Restart()
+        {
+            _isPushing = false;
+            _player.SetIsPushAnim = false;
+            _isBegin = true;
         }
     }
 }
