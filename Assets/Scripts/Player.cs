@@ -225,7 +225,7 @@ public class Player : MonoBehaviour, IRestart
         render.rotation = target.startClimb.rotation *  Quaternion.Euler(270, 90f, 0f);
     }
 
-    public void Test()
+    public void FinishClimb()
     {
         _isAnimation = false;
         _disableJump = false;
