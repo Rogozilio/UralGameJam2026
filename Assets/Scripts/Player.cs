@@ -9,6 +9,7 @@ using Input = Scripts.Input;
 public class Player : MonoBehaviour, IRestart
 {
     [Inject] private Input _input;
+    [Inject] private UIMenu _uiMenu;
     
     [Header("References")]
     public LifeTime lifeTime;
@@ -81,10 +82,16 @@ public class Player : MonoBehaviour, IRestart
         ResetOriginPositionAndRotation();
         lifeTime.OnLifeTimeEnded += RestartNow;
         lifeTime.StartLifeTimer();
+        
+        _uiMenu.OnResumed += HandleResumed;
     }
+    
+    private void HandleResumed() => _justResumed = true;
 
     private void Update()
     {
+        if(Time.timeScale == 0f) return;
+        
         MoveCamera();
         PlayerController();
         
@@ -94,6 +101,7 @@ public class Player : MonoBehaviour, IRestart
     private void OnDestroy()
     {
         lifeTime.OnLifeTimeEnded -= RestartNow;
+        _uiMenu.OnResumed -= HandleResumed; 
     }
 
     private void MoveCamera()
@@ -121,6 +129,11 @@ public class Player : MonoBehaviour, IRestart
     
         bool isGrounded = characterController.isGrounded || (isOnPlatform && _velocityY <= 0f);
 
+        if (_justResumed && !isGrounded)
+        {
+            isGrounded = true; // форсируем "на земле" на первый кадр
+            _justResumed = false;
+        }
         // Coyote time: считаем вниз, пока игрок был на земле, но уже сошёл
         if (isGrounded)
             _coyoteTimeCounter = coyoteTime;
@@ -256,7 +269,8 @@ public class Player : MonoBehaviour, IRestart
     #region Collisions&Triggers
 
     private ClimbData _climbData;
-    
+    private bool _justResumed;
+
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Climb"))
