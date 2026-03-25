@@ -45,6 +45,7 @@ namespace Scripts
         {
             if (skinnedMeshRenderer == null || skinnedMeshRenderer.Length == 0) return;
 
+            var minus = 0;
             foreach (var smr in skinnedMeshRenderer)
             {
                 if (smr == null || smr.sharedMesh == null) continue;
@@ -60,10 +61,16 @@ namespace Scripts
                     float segEnd   = step * (i + 1);
 
                     float weight = Mathf.InverseLerp(segStart, segEnd, blendValue) * 100f;
-                    weight = Mathf.Clamp(weight, 0f, 100f);
+
+                    if (minus > 0 && i == 2)
+                        weight = Mathf.Clamp(weight, 0f, 70f);
+                            
+                    weight = Mathf.Clamp(weight, 0f, 100f - minus);
 
                     smr.SetBlendShapeWeight(i, weight);
                 }
+
+                minus += 10;
             }
         }
 
