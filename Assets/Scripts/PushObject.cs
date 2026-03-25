@@ -93,9 +93,14 @@ namespace Scripts
                 return;
             }
 
-            _player.transform.position = GetPointForPush(_player.transform, _isBegin);
+            Vector3 targetPos = GetPointForPush(_player.transform, _isBegin);
+    
+            // Двигаем через CharacterController, а не transform.position напрямую
+            Vector3 delta = targetPos - _player.transform.position;
+            _player.characterController.Move(delta);
             _player.render.rotation = pushPoint.rotation * Quaternion.Euler(270, 90f, 0f);
             _player.SetIsPushAnim = true;
+            _player.animator.SetBool("isJump", false);
             _isBegin = false;
         }
 

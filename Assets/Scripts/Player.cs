@@ -70,7 +70,8 @@ public class Player : MonoBehaviour, IRestart
     void Awake()
     {
         _yaw   = cameraTarget.eulerAngles.y;
-        _pitch = cameraTarget.eulerAngles.x;
+        float rawPitch = cameraTarget.eulerAngles.x;
+        _pitch = rawPitch > 180f ? rawPitch - 360f : rawPitch;
         
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible   = false;
@@ -108,7 +109,7 @@ public class Player : MonoBehaviour, IRestart
 
         _yaw   += look.x * sensitivity;
         _pitch -= look.y * sensitivity;
-        _pitch  = Mathf.Clamp(_pitch, pitchMin, pitchMax);
+        _pitch = Mathf.Clamp(_pitch, pitchMin, pitchMax);
 
         cameraTarget.localRotation = Quaternion.Euler(_pitch, _yaw, 0f);
     }
@@ -210,9 +211,6 @@ public class Player : MonoBehaviour, IRestart
     
     private void Climb(ClimbData target)
     {
-        // if(!target.isActive) return;
-        // target.isActive = false;
-        
         var isLooksAt = Vector3.Dot(-render.right, target.transform.forward) > 0.5f;
         var isPlayerHigher = render.position.y > target.transform.position.y;
         
@@ -225,17 +223,17 @@ public class Player : MonoBehaviour, IRestart
         animator.CrossFade("Climb", 0.1f, 0);
         transform.position = target.GetPointStartClimb(transform);
         render.rotation = target.startClimb.rotation *  Quaternion.Euler(270, 90f, 0f);
-        
-        StartCoroutine(WaitAnimationEnd("Climb", () =>
-        {
-            _isAnimation = false;
-            _disableJump = false;
-            transform.position = target.GetPointFinishClimb(transform);
-            _velocityY = 0f;
-            characterController.enabled = true;
-            lifeTime.ResumeLifeTimer();
-            animator.SetTrigger("isClimb");
-        }));
+    }
+
+    public void Test()
+    {
+        _isAnimation = false;
+        _disableJump = false;
+        transform.position = _climbData.GetPointFinishClimb(transform);
+        characterController.enabled = true;
+        _velocityY = 0f;
+        lifeTime.ResumeLifeTimer();
+        animator.SetTrigger("isClimb");
     }
     
     private IEnumerator WaitAnimationEnd(string animationName, Action onComplete = null)
@@ -245,7 +243,7 @@ public class Player : MonoBehaviour, IRestart
             yield return null;
     
         while (animator.GetCurrentAnimatorStateInfo(0).IsName(animationName) &&
-               animator.GetCurrentAnimatorStateInfo(0).normalizedTime < 1f)
+               animator.GetCurrentAnimatorStateInfo(0).normalizedTime <= 1f)
         {
             yield return null;
         }
@@ -257,11 +255,14 @@ public class Player : MonoBehaviour, IRestart
 
     #region Collisions&Triggers
 
+    private ClimbData _climbData;
+    
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Climb"))
         {
             Climb(other.GetComponent<ClimbData>());
+            _climbData =  other.GetComponent<ClimbData>();
         }
         else if (other.CompareTag("Slowdown"))
         {
