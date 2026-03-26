@@ -6,6 +6,7 @@ namespace Scripts
     public class CameraTargetFollowPlayer : MonoBehaviour, IRestart
     {
         public Transform target;
+        public bool isMoveTargetCamera;
 
         private Vector3 _originPosition;
         private void Awake()
@@ -15,8 +16,11 @@ namespace Scripts
 
         private void OnTriggerStay(Collider other)
         {
+            if(!isMoveTargetCamera) return;
+                
             if (other.CompareTag("Player"))
             {
+                other.GetComponent<Player>().IsStaticCamera = true;
                 var newPosition = target.position;
                 newPosition.y = other.transform.position.y;
                 newPosition.z = other.transform.position.z;
