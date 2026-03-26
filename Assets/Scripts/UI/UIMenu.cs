@@ -31,7 +31,7 @@ public class UIMenu : MonoBehaviour
     {
         mainPanel.SetActive(false);
         // Скрыть курсор
-        Cursor.visible = false;
+        Cursor.visible = true;
         
         // Заблокировать курсор в центре экрана (опционально)
         Cursor.lockState = CursorLockMode.Locked;
@@ -53,7 +53,8 @@ public class UIMenu : MonoBehaviour
         ChangeVolume();
     }
 
-    private void FixedUpdate()
+    
+    private void Update()
     {
         if(!mainPanel.activeSelf) return;
 
