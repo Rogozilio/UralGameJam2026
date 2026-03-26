@@ -86,6 +86,15 @@ public class BurnProgressController : MonoBehaviour
             SetBurnProgress(burnProgress);
             previousBurnProgress = burnProgress;
             yield return null;
+
+            if (burnProgress >= 0.8f)
+            {
+                burnProgress = to;
+                SetBurnProgress(to);
+                previousBurnProgress = to;
+                burnCoroutine = null;
+                onBurnComplete?.Invoke();
+            }
         }
 
         burnProgress = to;
@@ -93,7 +102,7 @@ public class BurnProgressController : MonoBehaviour
         previousBurnProgress = to;
         burnCoroutine = null;
 
-        if (to >= 1f)
+        if (to >= 0.5f)
             onBurnComplete?.Invoke();
         else
             onReverseComplete?.Invoke();
