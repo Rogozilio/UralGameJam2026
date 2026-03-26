@@ -12,9 +12,13 @@ namespace Scripts
         public float rangeClimb = 0.5f;
         public float pushSpeed = 1f;
 
-        [Header("Movement Limit")]
-        public bool useMoveLimit = true;
+        [Header("Movement Limit")] public bool useMoveLimit = true;
         public float moveLimit = 2f;
+
+        [Header("Audio")] public AudioSource audioSource;
+        public AudioClip pushLoopClip;
+        public AudioClip pushEndClip;
+        public float delayEndClip = 0.35f;
 
         [Space] public UnityEvent actionPushToEnd;
 
@@ -47,6 +51,8 @@ namespace Scripts
                 float movedDistance = Vector3.Distance(_startTargetPosition, target.position);
                 if (movedDistance >= moveLimit)
                 {
+                    StopPushLoopSound();
+                    PlayPushEndSound();
                     actionPushToEnd?.Invoke();
                     _player.SetIsPushAnim = false;
                     return;
@@ -55,6 +61,8 @@ namespace Scripts
 
             target.position += pushPoint.forward * pushSpeed * Time.deltaTime;
 
+            PlayPushLoopSound();
+
             if (useMoveLimit)
             {
                 float movedDistance = Vector3.Distance(_startTargetPosition, target.position);
@@ -62,6 +70,8 @@ namespace Scripts
                 {
                     target.position = _startTargetPosition + pushPoint.forward.normalized * moveLimit;
                     _player.SetIsPushAnim = false;
+                    StopPushLoopSound();
+                    PlayPushEndSound();
                     actionPushToEnd?.Invoke();
                 }
             }
@@ -69,39 +79,64 @@ namespace Scripts
 
         private void LateUpdate()
         {
-            if (!_isPushing) return;
-
-            _player.SetIsPushAnim = false;
-
             if (!_isPushing)
             {
-                _isBegin = true;
+                StopPushLoopSound();
                 return;
             }
+
+            _player.SetIsPushAnim = false;
 
             var dot = Vector3.Dot(-_player.tempPointMove.transform.right, pushPoint.forward);
 
             if (dot < 0.9f)
             {
+                StopPushLoopSound();
                 _isBegin = true;
                 return;
             }
 
             if (!_player.isMove)
             {
+                StopPushLoopSound();
                 _isBegin = true;
                 return;
             }
 
             Vector3 targetPos = GetPointForPush(_player.transform, _isBegin);
-    
-            // Двигаем через CharacterController, а не transform.position напрямую
+
             Vector3 delta = targetPos - _player.transform.position;
             _player.characterController.Move(delta);
             _player.render.rotation = pushPoint.rotation * Quaternion.Euler(270, 90f, 0f);
             _player.SetIsPushAnim = true;
             _player.animator.SetBool("isJump", false);
             _isBegin = false;
+        }
+
+        private void PlayPushLoopSound()
+        {
+            if (audioSource == null || pushLoopClip == null) return;
+            if (audioSource.isPlaying && audioSource.clip == pushLoopClip) return;
+
+            audioSource.clip = pushLoopClip;
+            audioSource.loop = true;
+            audioSource.Play();
+        }
+
+        private void StopPushLoopSound()
+        {
+            if (audioSource == null) return;
+            if (audioSource.clip == pushLoopClip && audioSource.isPlaying)
+                audioSource.Stop();
+        }
+
+        private void PlayPushEndSound()
+        {
+            if (audioSource == null || pushEndClip == null) return;
+
+            audioSource.loop = false;
+            audioSource.clip = pushEndClip;
+            audioSource.PlayDelayed(delayEndClip);
         }
 
         public Vector3 GetPointForPush(Transform player, bool isBegin)
@@ -124,14 +159,16 @@ namespace Scripts
         private void OnTriggerExit(Collider other)
         {
             if (other.CompareTag("Player"))
+            {
                 _isPushing = false;
+                StopPushLoopSound();
+            }
         }
 
         private void OnDrawGizmos()
         {
             if (pushPoint == null) return;
 
-            // --- Зона захвата игрока (зелёная) ---
             Gizmos.color = Color.green;
 
             Vector3 leftStart = pushPoint.TransformPoint(new Vector3(-rangeClimb, 0f, 0f));
@@ -143,7 +180,6 @@ namespace Scripts
 
             if (!useMoveLimit) return;
 
-            // --- Предел движения (жёлтая линия и точка конца) ---
             Vector3 limitEnd = pushPoint.position + pushPoint.forward.normalized * moveLimit;
 
             Gizmos.color = Color.yellow;
@@ -151,7 +187,6 @@ namespace Scripts
             Gizmos.DrawSphere(limitEnd, 0.06f);
 
 #if UNITY_EDITOR
-            // Подпись с дистанцией
             UnityEditor.Handles.color = Color.yellow;
             UnityEditor.Handles.Label(limitEnd + Vector3.up * 0.15f, $"Limit: {moveLimit:F1}m");
 #endif
@@ -160,6 +195,7 @@ namespace Scripts
         public void Restart()
         {
             _isPushing = false;
+            StopPushLoopSound();
             _player.SetIsPushAnim = false;
             _isBegin = true;
         }

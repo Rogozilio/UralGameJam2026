@@ -59,6 +59,7 @@ MonoBehaviour:
   - {fileID: 7865924248191967263}
   light: {fileID: 1447273365782035309}
   audioSource: {fileID: 4960121610259339895}
+  startBurnClip: {fileID: 8300000, guid: 3206184cb2f67e04094aea6b49d12f02, type: 3}
   onFire:
     m_PersistentCalls:
       m_Calls: []
@@ -5102,7 +5103,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2535806939976549529, guid: fa0e90846a25f7449ae44388a9a45d87, type: 3}
       propertyPath: m_Volume
-      value: 0.1
+      value: 0.05
       objectReference: {fileID: 0}
     - target: {fileID: 2535806939976549529, guid: fa0e90846a25f7449ae44388a9a45d87, type: 3}
       propertyPath: MaxDistance

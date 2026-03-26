@@ -18,6 +18,9 @@ public class BurnProgressController : MonoBehaviour
     public UnityEvent onBurnComplete;
     public UnityEvent onReverseComplete;
 
+    public AudioClip clip;
+    public AudioSource audioSource;
+
     private static readonly string BurnProgressProperty = "_BurnProgress";
     private float previousBurnProgress = -1f;
     private Coroutine burnCoroutine;
@@ -56,6 +59,8 @@ public class BurnProgressController : MonoBehaviour
     {
         if (burnCoroutine != null)
             StopCoroutine(burnCoroutine);
+        audioSource.clip = clip;
+        audioSource.Play();
         burnCoroutine = StartCoroutine(BurnRoutine(0f, 1f));
     }
 

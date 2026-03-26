@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 namespace Scripts
@@ -17,7 +18,12 @@ namespace Scripts
         private Player _player;
 
         public bool isCancelRestart;
-        
+
+        public AudioClip clip;
+        public AudioSource audioSource;
+        public float fadeDuration = 0.5f;
+        private Coroutine _fadeCoroutine;
+
         public bool IsUp
         {
             set =>  _isUp = value;
@@ -77,6 +83,11 @@ namespace Scripts
 
                 if (_player != null)
                     _player.isOnPlatform = true;
+                
+                audioSource.clip = clip;
+                audioSource.loop = true;
+                if (!audioSource.isPlaying)
+                    audioSource.Play();
             }
         }
 
@@ -91,7 +102,37 @@ namespace Scripts
 
                 _playerController = null;
                 _player = null;
+
+                StopSound();
             }
+        }
+        
+        private void StopSound()
+        {
+            if (audioSource != null && audioSource.isPlaying)
+            {
+                if (_fadeCoroutine != null)
+                    StopCoroutine(_fadeCoroutine);
+
+                _fadeCoroutine = StartCoroutine(FadeOut());
+            }
+        }
+
+        private IEnumerator FadeOut()
+        {
+            float startVolume = audioSource.volume;
+            float elapsed = 0f;
+
+            while (elapsed < fadeDuration)
+            {
+                elapsed += Time.deltaTime;
+                audioSource.volume = Mathf.Lerp(startVolume, 0f, elapsed / fadeDuration);
+                yield return null;
+            }
+
+            audioSource.Stop();
+            audioSource.volume = startVolume; // восстанавливаем для следующего раза
+            _fadeCoroutine = null;
         }
 
         private void OnDrawGizmosSelected()
