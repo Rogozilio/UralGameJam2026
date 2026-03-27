@@ -29,7 +29,7 @@ public class Player : MonoBehaviour, IRestart
             isTutorial = value;
             animator.SetBool("isTutorial", value);
             isIdleFire = !value;
-            if(!isTutorial)
+            if (!isTutorial)
                 lifeTime.StartLifeTimer();
         }
     }
@@ -39,12 +39,18 @@ public class Player : MonoBehaviour, IRestart
     public float moveSpeed = 5f;
     public float jumpHeight = 1.5f;
     public float gravity = -20f;
+
+    [Header("Jump Feel")]
+    public float jumpBufferTime = 0.12f;
+    public float fallGravityMultiplier = 1.8f;
+    public float jumpCutGravityMultiplier = 2.3f;
+
     private float _velocityY;
     
     [Header("Camera")]
     public Transform cameraTarget;
     public float mouseSensitivity = 0.15f;
-    public float gamepadSensitivity = 150f;  
+    public float gamepadSensitivity = 150f;
     public float pitchMin = -80f;
     public float pitchMax = 80f;
     
@@ -65,20 +71,21 @@ public class Player : MonoBehaviour, IRestart
     [Header("Coyote Time")]
     public float coyoteTime = 0.15f;
     private float _coyoteTimeCounter;
-    private bool _wasGrounded;
+    private float _jumpBufferCounter;
     
-    [HideInInspector] public bool isOnPlatform; 
+    [HideInInspector] public bool isOnPlatform;
     private float _pitch;
     private float _yaw;
     private float _speedSlowdown = 1f;
     private bool _disableJump;
+    private bool _blockJumpUntilRelease;
 
     [SerializeField]
     private bool isIdleFire;
 
     public Transform tempPointMove;
 
-    [Header("Death")] 
+    [Header("Death")]
     public UnityEvent onStartDeath;
     public UnityEvent onEndDeath;
     public bool isDeath;
@@ -94,24 +101,23 @@ public class Player : MonoBehaviour, IRestart
 
     void Awake()
     {
-        _yaw   = cameraTarget.eulerAngles.y;
+        _yaw = cameraTarget.eulerAngles.y;
         float rawPitch = cameraTarget.eulerAngles.x;
         _pitch = rawPitch > 180f ? rawPitch - 360f : rawPitch;
         
         Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible   = false;
+        Cursor.visible = false;
 
         animator.applyRootMotion = false;
         
         ResetOriginPositionAndRotation();
         lifeTime.OnLifeTimeEnded += RestartNow;
-        if(!isTutorial)
+        if (!isTutorial)
             lifeTime.StartLifeTimer();
         
         _uiMenu.OnResumed += HandleResumed;
         
         onStartDeath.AddListener(OnStartDie);
-
         onEndDeath.AddListener(OnEndDie);
         
         transform.position = isTutorial ? respawn1.position : respawn2.position;
@@ -121,10 +127,9 @@ public class Player : MonoBehaviour, IRestart
     private void OnDestroy()
     {
         lifeTime.OnLifeTimeEnded -= RestartNow;
-        _uiMenu.OnResumed -= HandleResumed; 
+        _uiMenu.OnResumed -= HandleResumed;
         
         onStartDeath.RemoveListener(OnStartDie);
-
         onEndDeath.RemoveListener(OnEndDie);
     }
 
@@ -140,7 +145,7 @@ public class Player : MonoBehaviour, IRestart
     {
         lifeTime.shapeController.fire.Stop();
         lifeTime.shapeController.fire.Clear();
-        while(lifeTime.shapeController.blendValue < 0.98f)
+        while (lifeTime.shapeController.blendValue < 0.98f)
         {
             yield return new WaitForFixedUpdate();
         }
@@ -174,17 +179,17 @@ public class Player : MonoBehaviour, IRestart
 
     private void Update()
     {
-        if(Time.timeScale == 0f) return;
+        if (Time.timeScale == 0f) return;
         
         MoveCamera();
         if (isDeath && characterController.isGrounded)
         {
-            if(!lifeTime.isFastTime)
+            if (!lifeTime.isFastTime)
                 Death();
             return;
         }
+
         PlayerController();
-        
         animator.SetBool("isIdleFire", isIdleFire);
     }
 
@@ -199,7 +204,7 @@ public class Player : MonoBehaviour, IRestart
         else
             sensitivity = gamepadSensitivity * _input.stickSensitivityMultiplay * Time.deltaTime;
 
-        _yaw   += look.x * sensitivity;
+        _yaw += look.x * sensitivity;
         _pitch -= look.y * sensitivity;
         _pitch = Mathf.Clamp(_pitch, pitchMin, pitchMax);
 
@@ -212,13 +217,23 @@ public class Player : MonoBehaviour, IRestart
         if (_isAnimation) return;
     
         bool isGrounded = characterController.isGrounded || (isOnPlatform && _velocityY <= 0f);
+        bool jumpPressed = _input.isJump;
+        bool jumpHeld = _input.isJumpHeld;
+
+        if (!jumpHeld)
+            _blockJumpUntilRelease = false;
+
+        if (jumpPressed)
+            _jumpBufferCounter = jumpBufferTime;
+        else
+            _jumpBufferCounter = Mathf.Max(0f, _jumpBufferCounter - Time.deltaTime);
 
         if (_justResumed && !isGrounded)
         {
-            isGrounded = true; // форсируем "на земле" на первый кадр
+            isGrounded = true;
             _justResumed = false;
         }
-        // Coyote time: считаем вниз, пока игрок был на земле, но уже сошёл
+
         if (isGrounded)
             _coyoteTimeCounter = coyoteTime;
         else
@@ -242,18 +257,28 @@ public class Player : MonoBehaviour, IRestart
             tempPointMove.rotation = Quaternion.Slerp(tempPointMove.rotation, targetRotation, 15f * Time.deltaTime);
         }
 
-        // Прыжок с coyote time: прыгаем, пока счётчик > 0 (даже если уже в воздухе)
-        if (_input.isJump && _coyoteTimeCounter > 0f && !_disableJump)
+        if (_jumpBufferCounter > 0f && _coyoteTimeCounter > 0f && !_disableJump && !_blockJumpUntilRelease)
         {
             _velocityY = Mathf.Sqrt(jumpHeight * -2f * gravity);
-            _coyoteTimeCounter = 0f; // сбрасываем, чтобы прыгнуть только раз
+            _coyoteTimeCounter = 0f;
+            _jumpBufferCounter = 0f;
+            isGrounded = false;
         }
 
-        _velocityY += gravity * Time.deltaTime;
+        float gravityMultiplier = 1f;
+
+        if (!isGrounded)
+        {
+            if (_velocityY < 0f)
+                gravityMultiplier = fallGravityMultiplier;
+            else if (!jumpHeld)
+                gravityMultiplier = jumpCutGravityMultiplier;
+        }
+
+        _velocityY += gravity * gravityMultiplier * Time.deltaTime;
         characterController.Move(new Vector3(0f, _velocityY, 0f) * Time.deltaTime);
 
         tempPointMove.position = transform.position;
-      
     
         animator.SetBool("isJump", !isGrounded);
         animator.SetInteger("move", move.magnitude > 0 ? 1 : 0);
@@ -274,7 +299,7 @@ public class Player : MonoBehaviour, IRestart
 
     public void Death()
     {
-        if(!isDeath) return;
+        if (!isDeath) return;
         
         StartCoroutine(WaitEndDeath(2));
     }
@@ -311,6 +336,7 @@ public class Player : MonoBehaviour, IRestart
         _speedSlowdown = 1f;
         _disableJump = false;
         _coyoteTimeCounter = 0f;
+        _jumpBufferCounter = 0f;
         IsStaticCamera = false;
 
         if (isTutorial)
@@ -324,8 +350,8 @@ public class Player : MonoBehaviour, IRestart
     private bool _isAnimation;
     
     private void OnAnimatorMove()
-    { 
-        if(!_isAnimation) return;
+    {
+        if (!_isAnimation) return;
         
         animator.ApplyBuiltinRootMotion();
     }
@@ -341,15 +367,19 @@ public class Player : MonoBehaviour, IRestart
         var isLooksAt = Vector3.Dot(-render.right, target.transform.forward) > 0.5f;
         var isPlayerHigher = render.position.y > target.transform.position.y;
         
-        if(!isLooksAt || isPlayerHigher) return;
+        if (!isLooksAt || isPlayerHigher) return;
         
         _isAnimation = true;
+        _velocityY = 0f;
+        _coyoteTimeCounter = 0f;
+        _jumpBufferCounter = 0f;
+        _blockJumpUntilRelease = _input.isJumpHeld;
         
         lifeTime.PauseLifeTimer();
         characterController.enabled = false;
         animator.CrossFade("Climb", 0.1f, 0);
         transform.position = target.GetPointStartClimb(transform);
-        render.rotation = target.startClimb.rotation *  Quaternion.Euler(270, 90f, 0f);
+        render.rotation = target.startClimb.rotation * Quaternion.Euler(270, 90f, 0f);
     }
 
     public void FinishClimb()
@@ -359,6 +389,9 @@ public class Player : MonoBehaviour, IRestart
         transform.position = _climbData.GetPointFinishClimb(transform);
         characterController.enabled = true;
         _velocityY = 0f;
+        _coyoteTimeCounter = 0f;
+        _jumpBufferCounter = 0f;
+        _blockJumpUntilRelease = _input.isJumpHeld;
         lifeTime.ResumeLifeTimer();
         animator.SetTrigger("isClimb");
     }
@@ -375,7 +408,7 @@ public class Player : MonoBehaviour, IRestart
         if (other.CompareTag("Climb"))
         {
             Climb(other.GetComponent<ClimbData>());
-            _climbData =  other.GetComponent<ClimbData>();
+            _climbData = other.GetComponent<ClimbData>();
         }
         else if (other.CompareTag("Slowdown"))
         {
