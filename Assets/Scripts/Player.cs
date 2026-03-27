@@ -137,7 +137,7 @@ public class Player : MonoBehaviour, IRestart
     {
         lifeTime.isFastTime = true;
         animator.CrossFade("Die", 0.3f);
-
+        ashSpawner.Spawn();
         StartCoroutine(LaunchDisintegrate());
     }
     
@@ -171,7 +171,7 @@ public class Player : MonoBehaviour, IRestart
         isDeath = false;
         lifeTime.isFastTime = false;
         lifeTime.shapeController.isFireZero = false;
-        ashSpawner.Spawn();
+        //ashSpawner.Spawn();
         RestartSystem.Restart();
     }
     

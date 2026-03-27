@@ -8,8 +8,8 @@ public enum GameStep
     Tutorial,
     CutsceneMatchToOpenBox,
     MainGame,
-    CutsceneRespawn,
     СutsceneDropAxe,
+    lastGame
 }
 
 public class GameManager : MonoBehaviour
@@ -29,6 +29,7 @@ public class GameManager : MonoBehaviour
     [Space] 
     public UnityEvent Tutorial;
     public UnityEvent mainGame;
+    public UnityEvent lastGame;
 
     private void Awake()
     {
@@ -71,11 +72,11 @@ public class GameManager : MonoBehaviour
             case GameStep.MainGame:
                 mainGame?.Invoke();
                 break;
-            case GameStep.CutsceneRespawn:
-                PlayCutscene(cutsceneRespawn);
-                break;
             case GameStep.СutsceneDropAxe:
                 PlayCutscene(cutsceneDropAxe);
+                break;
+            case GameStep.lastGame:
+                lastGame?.Invoke();
                 break;
         }
     }

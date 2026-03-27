@@ -44,6 +44,9 @@ namespace Scripts
 
         private void Update()
         {
+            if (_playerController != null && (_player == null || !_playerController.enabled || _player.isDeath))
+                DetachPlayer();
+
             if (_isUp)
             {
                 if (target.position.y < maxY)
@@ -65,7 +68,7 @@ namespace Scripts
             Vector3 delta = target.position - _lastPosition;
             _lastPosition = target.position;
 
-            if (_playerController != null && delta != Vector3.zero)
+            if (_playerController != null && _playerController.enabled && delta != Vector3.zero)
                 _playerController.Move(delta);
         }
 
@@ -73,12 +76,22 @@ namespace Scripts
         {
             if (other.CompareTag("Player"))
             {
+                var player = other.GetComponent<Player>();
+                var controller = other.GetComponent<CharacterController>();
+
+                if (player == null || controller == null || !controller.enabled || player.isDeath)
+                {
+                    DetachPlayer();
+                    return;
+                }
+
                 _isUp = true;
 
                 if (_playerController == null)
                 {
-                    _playerController = other.GetComponent<CharacterController>();
-                    _player = other.GetComponent<Player>();
+                    _playerController = controller;
+                    _player = player;
+                    _player.onStartDeath.AddListener(DetachPlayer);
                 }
 
                 if (_player != null)
@@ -94,17 +107,12 @@ namespace Scripts
         private void OnTriggerExit(Collider other)
         {
             if (other.CompareTag("Player"))
-            {
-                _isUp = false;
+                DetachPlayer();
+        }
 
-                if (_player != null)
-                    _player.isOnPlatform = false;
-
-                _playerController = null;
-                _player = null;
-
-                StopSound();
-            }
+        private void OnDestroy()
+        {
+            DetachPlayer();
         }
         
         private void StopSound()
@@ -162,7 +170,23 @@ namespace Scripts
         {
             if(isCancelRestart)  return;
             
+            DetachPlayer();
+        }
+
+        private void DetachPlayer()
+        {
             _isUp = false;
+
+            if (_player != null)
+            {
+                _player.isOnPlatform = false;
+                _player.onStartDeath.RemoveListener(DetachPlayer);
+            }
+
+            _playerController = null;
+            _player = null;
+
+            StopSound();
         }
     }
 }
