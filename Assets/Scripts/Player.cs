@@ -330,7 +330,6 @@ public class Player : MonoBehaviour, IRestart
         if (!isTutorial)
         {
             lifeTime.RestartLifeTimer();
-            characterController.enabled = true;
         }
 
         _speedSlowdown = 1f;
