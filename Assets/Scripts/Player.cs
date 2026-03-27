@@ -18,7 +18,22 @@ public class Player : MonoBehaviour, IRestart
     public Animator animator;
     public Transform render;
     public AshSpawner ashSpawner;
-    
+    public Transform respawn1;
+    public Transform respawn2;
+    public bool isTutorial;
+
+    public bool IsTutorial
+    {
+        set
+        {
+            isTutorial = value;
+            animator.SetBool("isTutorial", value);
+            isIdleFire = !value;
+            if(!isTutorial)
+                lifeTime.StartLifeTimer();
+        }
+    }
+
     [Header("CharacterController")]
     public CharacterController characterController;
     public float moveSpeed = 5f;
@@ -68,7 +83,6 @@ public class Player : MonoBehaviour, IRestart
     public UnityEvent onEndDeath;
     public bool isDeath;
     public Material disintegrate;
-    public Material fire;
     
     public bool isMove => _input.playerMove.magnitude > 0;
 
@@ -91,13 +105,17 @@ public class Player : MonoBehaviour, IRestart
         
         ResetOriginPositionAndRotation();
         lifeTime.OnLifeTimeEnded += RestartNow;
-        lifeTime.StartLifeTimer();
+        if(!isTutorial)
+            lifeTime.StartLifeTimer();
         
         _uiMenu.OnResumed += HandleResumed;
         
         onStartDeath.AddListener(OnStartDie);
 
         onEndDeath.AddListener(OnEndDie);
+        
+        transform.position = isTutorial ? respawn1.position : respawn2.position;
+        transform.rotation = isTutorial ? respawn1.rotation : respawn2.rotation;
     }
     
     private void OnDestroy()
@@ -279,18 +297,24 @@ public class Player : MonoBehaviour, IRestart
     {
         characterController.enabled = false;
     
-        transform.position = _originPosition;
-        transform.rotation = _originRotation;
+        transform.position = isTutorial ? respawn1.position : respawn2.position;
+        transform.rotation = isTutorial ? respawn1.rotation : respawn2.rotation;
         render.localRotation = _originRenderRotation;
         _velocityY = 0f;
-        Respawn();
-        
-        lifeTime.RestartLifeTimer();
+
+        if (!isTutorial)
+        {
+            lifeTime.RestartLifeTimer();
+            characterController.enabled = true;
+        }
 
         _speedSlowdown = 1f;
         _disableJump = false;
         _coyoteTimeCounter = 0f;
         IsStaticCamera = false;
+
+        if (isTutorial)
+            FinishRespawn();
     }
 
     #endregion
@@ -304,11 +328,6 @@ public class Player : MonoBehaviour, IRestart
         if(!_isAnimation) return;
         
         animator.ApplyBuiltinRootMotion();
-    }
-
-    private void Respawn()
-    {
-        animator.CrossFade("Respawn", 0.1f);
     }
 
     public void FinishRespawn()

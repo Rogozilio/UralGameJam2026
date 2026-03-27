@@ -32225,6 +32225,37 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 612407297}
   m_Mesh: {fileID: 4300000, guid: 6a7e3b7e9a6ebb24f82dbede20898137, type: 3}
+--- !u!1 &614714242
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 614714243}
+  m_Layer: 0
+  m_Name: RespawnPlayer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &614714243
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 614714242}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
+  m_LocalPosition: {x: 0.00114, y: -0.01655, z: 0.00016}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 995827840}
+  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
 --- !u!1 &615256308
 GameObject:
   m_ObjectHideFlags: 0
@@ -34512,6 +34543,18 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+      - m_Target: {fileID: 1886279607}
+        m_TargetAssemblyTypeName: Player, Assembly-CSharp
+        m_MethodName: set_IsTutorial
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 1
+        m_CallState: 2
   mainGame:
     m_PersistentCalls:
       m_Calls:
@@ -34519,6 +34562,18 @@ MonoBehaviour:
         m_TargetAssemblyTypeName: BGM, Assembly-CSharp
         m_MethodName: SetLayer
         m_Mode: 3
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 1
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 1886279607}
+        m_TargetAssemblyTypeName: Player, Assembly-CSharp
+        m_MethodName: set_IsTutorial
+        m_Mode: 6
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
@@ -34649,6 +34704,7 @@ Transform:
   - {fileID: 171415180}
   - {fileID: 2032465655}
   - {fileID: 692617569}
+  - {fileID: 1137886280}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &662092518
@@ -35021,6 +35077,14 @@ PrefabInstance:
       propertyPath: fire
       value: 
       objectReference: {fileID: 2100000, guid: c8a0a0199e828754d9927d1ea9f45b58, type: 2}
+    - target: {fileID: 4012926181333665523, guid: 84ffd34e923d90841b57a322573cee90, type: 3}
+      propertyPath: respawn1
+      value: 
+      objectReference: {fileID: 1137886280}
+    - target: {fileID: 4012926181333665523, guid: 84ffd34e923d90841b57a322573cee90, type: 3}
+      propertyPath: respawn2
+      value: 
+      objectReference: {fileID: 614714243}
     - target: {fileID: 4012926181333665523, guid: 84ffd34e923d90841b57a322573cee90, type: 3}
       propertyPath: m_Enabled
       value: 1
@@ -51545,7 +51609,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: bf83070fa7c055d4a86849e154321904, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 614714243}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: bf83070fa7c055d4a86849e154321904, type: 3}
       insertIndex: -1
@@ -51578,6 +51645,11 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!4 &995827840 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: bf83070fa7c055d4a86849e154321904, type: 3}
+  m_PrefabInstance: {fileID: 995827837}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &997476443
 GameObject:
   m_ObjectHideFlags: 0
@@ -59336,6 +59408,37 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1137866035}
   m_Mesh: {fileID: 4300000, guid: 60694673404b80d45920d4cb862f845a, type: 3}
+--- !u!1 &1137886279
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1137886280}
+  m_Layer: 0
+  m_Name: RespawnPlayer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1137886280
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1137886279}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.9607411, z: -0, w: 0.27744657}
+  m_LocalPosition: {x: -4.426, y: 0, z: -1.062}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 660618754}
+  m_LocalEulerAnglesHint: {x: 0, y: -147.784, z: 0}
 --- !u!1 &1139406198
 GameObject:
   m_ObjectHideFlags: 0
@@ -72297,7 +72400,8 @@ PrefabInstance:
       propertyPath: m_Intensity
       value: 18.58
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 54324626887154284, guid: fb71d571078e952469f83dcc9bb68890, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
@@ -111578,6 +111682,7 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 893356486}
+  - {fileID: 660618754}
   - {fileID: 233717891}
   - {fileID: 282157329}
   - {fileID: 1133581086}
@@ -111598,7 +111703,6 @@ SceneRoots:
   - {fileID: 668354254}
   - {fileID: 1938178364}
   - {fileID: 2039649732}
-  - {fileID: 660618754}
   - {fileID: 1819454796}
   - {fileID: 657856388}
   - {fileID: 955139964}
