@@ -186,7 +186,7 @@ public class Player : MonoBehaviour, IRestart
         _originRotation = transform.rotation;
     }
 
-    private void RestartNow()
+    public void RestartNow()
     {
         RestartSystem.Restart();
     }
