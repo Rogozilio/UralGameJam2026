@@ -2,7 +2,9 @@ using System;
 using System.Collections;
 using Scripts;
 using Unity.Cinemachine;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Events;
 using Zenject;
 using Input = Scripts.Input;
 
@@ -15,6 +17,7 @@ public class Player : MonoBehaviour, IRestart
     public LifeTime lifeTime;
     public Animator animator;
     public Transform render;
+    public AshSpawner ashSpawner;
     
     [Header("CharacterController")]
     public CharacterController characterController;
@@ -59,6 +62,13 @@ public class Player : MonoBehaviour, IRestart
     private bool isIdleFire;
 
     public Transform tempPointMove;
+
+    [Header("Death")] 
+    public UnityEvent onStartDeath;
+    public UnityEvent onEndDeath;
+    public bool isDeath;
+    public Material disintegrate;
+    public Material fire;
     
     public bool isMove => _input.playerMove.magnitude > 0;
 
@@ -84,6 +94,62 @@ public class Player : MonoBehaviour, IRestart
         lifeTime.StartLifeTimer();
         
         _uiMenu.OnResumed += HandleResumed;
+        
+        onStartDeath.AddListener(OnStartDie);
+
+        onEndDeath.AddListener(OnEndDie);
+    }
+    
+    private void OnDestroy()
+    {
+        lifeTime.OnLifeTimeEnded -= RestartNow;
+        _uiMenu.OnResumed -= HandleResumed; 
+        
+        onStartDeath.RemoveListener(OnStartDie);
+
+        onEndDeath.RemoveListener(OnEndDie);
+    }
+
+    private void OnStartDie()
+    {
+        lifeTime.isFastTime = true;
+        animator.CrossFade("Die", 0.3f);
+
+        StartCoroutine(LaunchDisintegrate());
+    }
+    
+    private IEnumerator LaunchDisintegrate()
+    {
+        lifeTime.shapeController.fire.Stop();
+        lifeTime.shapeController.fire.Clear();
+        while(lifeTime.shapeController.blendValue < 0.98f)
+        {
+            yield return new WaitForFixedUpdate();
+        }
+        
+        disintegrate.SetFloat("_DissolveProgress", 0);
+        lifeTime.shapeController.isFireZero = true;
+        
+        var step = 0.01f;
+        var dissolveProgress = disintegrate.GetFloat("_DissolveProgress");
+
+        while (dissolveProgress < 1)
+        {
+            dissolveProgress += step;
+            disintegrate.SetFloat("_DissolveProgress", dissolveProgress);
+            yield return new WaitForFixedUpdate();
+        }
+        
+        disintegrate.SetFloat("_DissolveProgress", 0);
+    }
+
+    private void OnEndDie()
+    {
+        isDeath = false;
+        lifeTime.isFastTime = false;
+        lifeTime.shapeController.isFireZero = false;
+        ashSpawner.Spawn();
+        RestartSystem.Restart();
     }
     
     private void HandleResumed() => _justResumed = true;
@@ -93,15 +159,15 @@ public class Player : MonoBehaviour, IRestart
         if(Time.timeScale == 0f) return;
         
         MoveCamera();
+        if (isDeath && characterController.isGrounded)
+        {
+            if(!lifeTime.isFastTime)
+                Death();
+            return;
+        }
         PlayerController();
         
         animator.SetBool("isIdleFire", isIdleFire);
-    }
-
-    private void OnDestroy()
-    {
-        lifeTime.OnLifeTimeEnded -= RestartNow;
-        _uiMenu.OnResumed -= HandleResumed; 
     }
 
     private void MoveCamera()
@@ -179,16 +245,34 @@ public class Player : MonoBehaviour, IRestart
 
     private Vector3 _originPosition;
     private Quaternion _originRotation;
+    private Quaternion _originRenderRotation;
 
     private void ResetOriginPositionAndRotation()
     {
         _originPosition = transform.position;
         _originRotation = transform.rotation;
+        _originRenderRotation = render.localRotation;
+    }
+
+    public void Death()
+    {
+        if(!isDeath) return;
+        
+        StartCoroutine(WaitEndDeath(2));
+    }
+    
+    private IEnumerator WaitEndDeath(float time)
+    {
+        onStartDeath?.Invoke();
+        
+        yield return new WaitForSeconds(time);
+
+        onEndDeath?.Invoke();
     }
 
     public void RestartNow()
     {
-        RestartSystem.Restart();
+        isDeath = true;
     }
     
     public void Restart()
@@ -197,9 +281,9 @@ public class Player : MonoBehaviour, IRestart
     
         transform.position = _originPosition;
         transform.rotation = _originRotation;
+        render.localRotation = _originRenderRotation;
         _velocityY = 0f;
-    
-        characterController.enabled = true;
+        Respawn();
         
         lifeTime.RestartLifeTimer();
 
@@ -221,7 +305,18 @@ public class Player : MonoBehaviour, IRestart
         
         animator.ApplyBuiltinRootMotion();
     }
-    
+
+    private void Respawn()
+    {
+        animator.CrossFade("Respawn", 0.1f);
+    }
+
+    public void FinishRespawn()
+    {
+        characterController.enabled = true;
+        transform.rotation *= Quaternion.Euler(0f, 180f, 0f);
+    }
+
     private void Climb(ClimbData target)
     {
         var isLooksAt = Vector3.Dot(-render.right, target.transform.forward) > 0.5f;
@@ -247,21 +342,6 @@ public class Player : MonoBehaviour, IRestart
         _velocityY = 0f;
         lifeTime.ResumeLifeTimer();
         animator.SetTrigger("isClimb");
-    }
-    
-    private IEnumerator WaitAnimationEnd(string animationName, Action onComplete = null)
-    {
-        yield return null;
-        while (!animator.GetCurrentAnimatorStateInfo(0).IsName(animationName))
-            yield return null;
-    
-        while (animator.GetCurrentAnimatorStateInfo(0).IsName(animationName) &&
-               animator.GetCurrentAnimatorStateInfo(0).normalizedTime <= 1f)
-        {
-            yield return null;
-        }
-
-        onComplete?.Invoke();
     }
 
     #endregion

@@ -14,6 +14,8 @@ namespace Scripts
         [Range(0f, 1f)]
         public float blendValue = 0f;
 
+        public bool isFireZero;
+
         [System.Serializable]
         public struct GradientRendererEntry
         {
@@ -28,6 +30,7 @@ namespace Scripts
         public GradientRendererEntry[] gradientRenderers;
 
         private static readonly int GradientFillID = Shader.PropertyToID("_GradientFill");
+        private static readonly int maskProgress = Shader.PropertyToID("_MaskProgress");
 
         private void Update()
         {
@@ -92,7 +95,8 @@ namespace Scripts
 
                 MaterialPropertyBlock block = new MaterialPropertyBlock();
                 entry.renderer.GetPropertyBlock(block, entry.materialIndex);
-                block.SetFloat(GradientFillID, gradientValue);
+                block.SetFloat(GradientFillID, isFireZero ? 0 : gradientValue);
+                block.SetFloat(maskProgress, gradientValue);
                 entry.renderer.SetPropertyBlock(block, entry.materialIndex);
             }
         }

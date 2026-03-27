@@ -13,6 +13,8 @@ namespace Scripts
 
         public event Action OnLifeTimeEnded;
 
+        public bool isFastTime;
+
         private Coroutine _lifeCoroutine;
         private float _remainingTime;
         private bool _isPaused;
@@ -62,9 +64,13 @@ namespace Scripts
                 text.text = _remainingTime.ToString("00");
 
                 shapeController.blendValue = 1f - _remainingTime / time;
-                
+
                 if (!_isPaused)
-                    _remainingTime -= Time.deltaTime;
+                {
+                    var multiply = isFastTime ? 40f : 1f;
+                    _remainingTime -= Time.deltaTime * multiply;
+                }
+                    
                 
                 yield return null;
             }

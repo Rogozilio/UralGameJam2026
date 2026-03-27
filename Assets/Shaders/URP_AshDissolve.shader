@@ -1,40 +1,45 @@
-Shader "Custom/URP/Ash Dissolve"
+Shader "Custom/URP/Disintegrate"
 {
     Properties
     {
         [MainTexture] _BaseMap("Base Map", 2D) = "white" {}
         [MainColor] _BaseColor("Base Color", Color) = (1,1,1,1)
+
         [Normal] _BumpMap("Normal Map", 2D) = "bump" {}
         _BumpScale("Normal Strength", Range(0.0, 2.0)) = 1.0
 
         [Header(Dissolve)]
         [KeywordEnum(ObjectSpace, WorldSpace)] _HeightSpace("Height Space", Float) = 0
         _DissolveProgress("Dissolve Progress", Range(0, 1)) = 0
+        _ClipThreshold("Clip Threshold", Range(-0.2, 0.2)) = 0
         _DirectionVector("Direction Vector", Vector) = (0, -1, 0, 0)
-        _HeightMin("Height Min", Float) = 0.0
-        _HeightMax("Height Max", Float) = 1.0
-        _ClipThreshold("Clip Threshold", Range(-0.2, 0.2)) = 0.0
+        _HeightMin("Height Min", Float) = 0
+        _HeightMax("Height Max", Float) = 1
 
         [Header(Noise)]
         _NoiseTex("Noise Tex", 2D) = "gray" {}
         _NoiseScale("Noise Scale", Range(0.1, 20.0)) = 3.0
-        _NoiseStrength("Noise Strength", Range(0.0, 1.0)) = 0.25
+        _NoiseStrength("Noise Strength", Range(0.0, 1.0)) = 0.2
 
         [Header(Edge)]
-        _EdgeWidth("Edge Width", Range(0.001, 0.3)) = 0.06
-        [HDR] _EdgeColor("Edge Color", Color) = (2.8, 1.35, 0.2, 1.0)
-        _EdgeIntensity("Edge Intensity", Range(0.0, 8.0)) = 2.0
+        _EdgeWidth("Edge Width", Range(0.001, 0.3)) = 0.05
+        [HDR] _EdgeColor("Edge Color", Color) = (2.5, 1.2, 0.2, 1.0)
+        _EdgeEmission("Edge Emission", Range(0.0, 10.0)) = 2.0
         _EdgeStyle("Edge Style (0 Ash, 1 Hot)", Range(0.0, 1.0)) = 0.0
+        _EdgeNoiseBoost("Edge Noise Boost", Range(0.0, 2.0)) = 0.6
 
         [Header(Ash)]
-        _BurnDarkening("Burn Darkening", Range(0.0, 1.0)) = 0.65
-        _AshTint("Ash Tint", Color) = (0.23, 0.22, 0.2, 1.0)
+        _AshTint("Ash Tint", Color) = (0.25, 0.23, 0.2, 1)
+        _BurnDarkening("Burn Darkening", Range(0.0, 1.0)) = 0.6
+        _AshWidth("Ash Width", Range(0.01, 0.6)) = 0.18
 
-        [Header(Vertex Crumble)]
-        _DustAmount("Dust Amount", Range(0.0, 2.0)) = 0.35
-        _ParticleAmount("Particle Amount", Range(0.0, 0.2)) = 0.005
-        _VertexFalloff("Vertex Falloff", Range(0.01, 0.5)) = 0.14
-        _VertexJitterSpeed("Vertex Jitter Speed", Range(0.0, 20.0)) = 7.0
+        [Header(Vertex Motion)]
+        _VertexOffset("Vertex Offset", Range(0.0, 0.2)) = 0.006
+        _VertexBand("Vertex Band", Range(0.01, 0.4)) = 0.12
+        _VertexDirectionInfluence("Direction Influence", Range(0.0, 1.0)) = 1.0
+        _VertexNormalInfluence("Normal Influence", Range(0.0, 1.0)) = 0.08
+        _VertexMaxWorldOffset("Max World Offset", Range(0.0, 0.05)) = 0.008
+        _VertexJitterSpeed("Jitter Speed", Range(0.0, 20.0)) = 7.0
 
         [Header(Lighting)]
         _Smoothness("Smoothness", Range(0.0, 1.0)) = 0.35
@@ -44,7 +49,7 @@ Shader "Custom/URP/Ash Dissolve"
         [Toggle(_ALPHATEST_ON)] _AlphaClip("Use Base Alpha Clip", Float) = 0
         _Cutoff("Base Alpha Cutoff", Range(0.0, 1.0)) = 0.5
 
-        [HideInInspector] _Cull("__Cull", Float) = 2.0
+        [HideInInspector] _Cull("__Cull", Float) = 2
     }
 
     SubShader
@@ -55,7 +60,6 @@ Shader "Custom/URP/Ash Dissolve"
             "Queue" = "AlphaTest"
             "RenderPipeline" = "UniversalPipeline"
         }
-        LOD 250
 
         HLSLINCLUDE
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
@@ -71,50 +75,58 @@ Shader "Custom/URP/Ash Dissolve"
         CBUFFER_START(UnityPerMaterial)
             float4 _BaseColor;
             float4 _BaseMap_ST;
+            float4 _DirectionVector;
             float4 _EdgeColor;
             float4 _AshTint;
-            float4 _DirectionVector;
+
             float _BumpScale;
+
             float _DissolveProgress;
+            float _ClipThreshold;
             float _HeightMin;
             float _HeightMax;
-            float _ClipThreshold;
+
             float _NoiseScale;
             float _NoiseStrength;
+
             float _EdgeWidth;
-            float _EdgeIntensity;
+            float _EdgeEmission;
             float _EdgeStyle;
+            float _EdgeNoiseBoost;
+
             float _BurnDarkening;
-            float _DustAmount;
-            float _ParticleAmount;
-            float _VertexFalloff;
+            float _AshWidth;
+
+            float _VertexOffset;
+            float _VertexBand;
+            float _VertexDirectionInfluence;
+            float _VertexNormalInfluence;
+            float _VertexMaxWorldOffset;
             float _VertexJitterSpeed;
+
             float _Smoothness;
             float _SpecularStrength;
+
             float _Cutoff;
         CBUFFER_END
 
         struct DissolveData
         {
-            float dissolveMask;
+            float mask;
             float threshold;
             float clipValue;
             float edge;
             float noise;
         };
 
-        float Hash31(float3 p)
+        float3 GetSafeDirectionRef()
         {
-            p = frac(p * 0.1031);
-            p += dot(p, p.yzx + 33.33);
-            return frac((p.x + p.y) * p.z);
-        }
-
-        float3 Hash33(float3 p)
-        {
-            p = frac(p * 0.1031);
-            p += dot(p, p.yxz + 33.33);
-            return frac((p.xxy + p.yzz) * p.zyx);
+            float3 dir = _DirectionVector.xyz;
+            if (dot(dir, dir) < 1e-5)
+            {
+                dir = float3(0.0, -1.0, 0.0);
+            }
+            return normalize(dir);
         }
 
         float3 GetReferencePosition(float3 positionOS, float3 positionWS)
@@ -129,20 +141,10 @@ Shader "Custom/URP/Ash Dissolve"
         float3 GetReferenceNormal(float3 normalOS, float3 normalWS)
         {
             #if defined(_HEIGHTSPACE_WORLDSPACE)
-                return normalize(normalWS);
+                return SafeNormalize(normalWS);
             #else
-                return normalize(normalOS);
+                return SafeNormalize(normalOS);
             #endif
-        }
-
-        float3 GetSafeDirectionRef()
-        {
-            float3 dir = _DirectionVector.xyz;
-            if (dot(dir, dir) < 1e-5)
-            {
-                dir = float3(0.0, -1.0, 0.0);
-            }
-            return normalize(dir);
         }
 
         float3 ReferenceToWorldDir(float3 dirRef)
@@ -156,117 +158,116 @@ Shader "Custom/URP/Ash Dissolve"
 
         float ComputeHeightMaskTopToBottom(float3 refPos, float3 dirRef)
         {
-            float projectedHeight = dot(refPos, -dirRef);
+            float projected = dot(refPos, -dirRef);
             float range = max(abs(_HeightMax - _HeightMin), 1e-5);
-            float height01 = saturate((projectedHeight - _HeightMin) / range);
-            return 1.0 - height01;
+            float t = saturate((projected - _HeightMin) / range);
+            return 1.0 - t;
         }
 
-        float SampleTriplanarNoiseLOD(float3 refPos, float3 refNormal)
+        float SampleNoiseTriplanar(float3 refPos, float3 refNormal)
         {
             float3 p = refPos * _NoiseScale;
-            float3 weights = abs(refNormal);
-            weights /= max(weights.x + weights.y + weights.z, 1e-4);
+            float3 w = abs(refNormal);
+            w = pow(w, 3.0);
+            w /= max(w.x + w.y + w.z, 1e-5);
 
-            float noiseXY = SAMPLE_TEXTURE2D_LOD(_NoiseTex, sampler_NoiseTex, p.xy, 0).r;
-            float noiseXZ = SAMPLE_TEXTURE2D_LOD(_NoiseTex, sampler_NoiseTex, p.xz, 0).r;
-            float noiseYZ = SAMPLE_TEXTURE2D_LOD(_NoiseTex, sampler_NoiseTex, p.yz, 0).r;
-
-            return noiseXY * weights.z + noiseXZ * weights.y + noiseYZ * weights.x;
+            float nXY = SAMPLE_TEXTURE2D(_NoiseTex, sampler_NoiseTex, p.xy).r;
+            float nXZ = SAMPLE_TEXTURE2D(_NoiseTex, sampler_NoiseTex, p.xz).r;
+            float nYZ = SAMPLE_TEXTURE2D(_NoiseTex, sampler_NoiseTex, p.yz).r;
+            return nXY * w.z + nXZ * w.y + nYZ * w.x;
         }
 
-        float SampleTriplanarNoise(float3 refPos, float3 refNormal)
+        float SampleNoiseTriplanarLOD(float3 refPos, float3 refNormal)
         {
             float3 p = refPos * _NoiseScale;
-            float3 weights = abs(refNormal);
-            weights /= max(weights.x + weights.y + weights.z, 1e-4);
+            float3 w = abs(refNormal);
+            w = pow(w, 3.0);
+            w /= max(w.x + w.y + w.z, 1e-5);
 
-            float noiseXY = SAMPLE_TEXTURE2D(_NoiseTex, sampler_NoiseTex, p.xy).r;
-            float noiseXZ = SAMPLE_TEXTURE2D(_NoiseTex, sampler_NoiseTex, p.xz).r;
-            float noiseYZ = SAMPLE_TEXTURE2D(_NoiseTex, sampler_NoiseTex, p.yz).r;
-
-            return noiseXY * weights.z + noiseXZ * weights.y + noiseYZ * weights.x;
+            float nXY = SAMPLE_TEXTURE2D_LOD(_NoiseTex, sampler_NoiseTex, p.xy, 0).r;
+            float nXZ = SAMPLE_TEXTURE2D_LOD(_NoiseTex, sampler_NoiseTex, p.xz, 0).r;
+            float nYZ = SAMPLE_TEXTURE2D_LOD(_NoiseTex, sampler_NoiseTex, p.yz, 0).r;
+            return nXY * w.z + nXZ * w.y + nYZ * w.x;
         }
 
-        float ComputeDissolveMask(float topToBottomMask, float noiseSample)
+        DissolveData EvaluateDissolve(float3 positionOS, float3 positionWS, float3 normalOS, float3 normalWS)
         {
-            float centeredNoise = (noiseSample * 2.0 - 1.0) * _NoiseStrength;
-            return saturate(topToBottomMask + centeredNoise);
-        }
+            DissolveData o;
 
-        float GetDissolveThreshold()
-        {
-            return saturate(_DissolveProgress + _ClipThreshold);
-        }
-
-        DissolveData EvaluateDissolve(float3 originOS, float3 originWS, float3 normalOS, float3 normalWS)
-        {
-            DissolveData data;
-
-            float3 refPos = GetReferencePosition(originOS, originWS);
-            float3 refNormal = GetReferenceNormal(normalOS, normalWS);
-            float3 dirRef = GetSafeDirectionRef();
-
-            float noise = SampleTriplanarNoise(refPos, refNormal);
-            float topToBottomMask = ComputeHeightMaskTopToBottom(refPos, dirRef);
-
-            data.noise = noise;
-            data.dissolveMask = ComputeDissolveMask(topToBottomMask, noise);
-            data.threshold = GetDissolveThreshold();
-            data.clipValue = data.dissolveMask - data.threshold;
-            data.edge = saturate(1.0 - (data.clipValue / max(_EdgeWidth, 1e-5)));
-
-            return data;
-        }
-
-        float3 ComputeDisplacementWS(float3 positionOS, float3 positionWS, float3 normalOS, float3 normalWS)
-        {
             float3 refPos = GetReferencePosition(positionOS, positionWS);
             float3 refNormal = GetReferenceNormal(normalOS, normalWS);
             float3 dirRef = GetSafeDirectionRef();
 
-            float noise = SampleTriplanarNoiseLOD(refPos, refNormal);
-            float topToBottomMask = ComputeHeightMaskTopToBottom(refPos, dirRef);
-            float dissolveMask = ComputeDissolveMask(topToBottomMask, noise);
-            float threshold = GetDissolveThreshold();
+            float baseMask = ComputeHeightMaskTopToBottom(refPos, dirRef);
+            float noise = SampleNoiseTriplanar(refPos, refNormal);
+            float noiseOffset = (noise * 2.0 - 1.0) * _NoiseStrength;
 
-            // Keep deformation only in a narrow band around dissolve front.
-            float frontMask = saturate(1.0 - abs(dissolveMask - threshold) / max(_VertexFalloff, 1e-5));
-            frontMask = frontMask * frontMask;
+            o.mask = saturate(baseMask + noiseOffset);
+            o.threshold = saturate(_DissolveProgress + _ClipThreshold);
+            o.clipValue = o.mask - o.threshold;
+            float edgeRamp = smoothstep(0.0, max(_EdgeWidth, 1e-5), o.clipValue);
+            o.edge = (1.0 - edgeRamp) * step(0.0, o.clipValue);
+            o.noise = noise;
 
-            float crumble = min(frontMask * _ParticleAmount, 0.04);
-            if (crumble <= 1e-6)
+            return o;
+        }
+
+        float3 ComputeDisplacementWS(float3 positionOS, float3 positionWS, float3 normalOS, float3 normalWS)
+        {
+            if (_VertexOffset <= 1e-6)
             {
                 return float3(0.0, 0.0, 0.0);
             }
 
-            float displacementScale = min(max(abs(_HeightMax - _HeightMin), 1e-4), 1.5);
+            float3 refPos = GetReferencePosition(positionOS, positionWS);
+            float3 refNormal = GetReferenceNormal(normalOS, normalWS);
+            float3 dirRef = GetSafeDirectionRef();
 
-            // Continuous noise-driven offset avoids long stretched spikes between neighboring vertices.
-            float noise2 = SampleTriplanarNoiseLOD(refPos + refNormal * 0.37 + dirRef * 0.19, refNormal);
-            float signedNoise = (noise2 * 2.0 - 1.0);
-            float jitter = sin(_Time.y * _VertexJitterSpeed + noise * 9.73 + noise2 * 6.11) * 0.2;
+            float baseMask = ComputeHeightMaskTopToBottom(refPos, dirRef);
+            float noiseA = SampleNoiseTriplanarLOD(refPos, refNormal);
+            float noiseOffset = (noiseA * 2.0 - 1.0) * _NoiseStrength;
+            float mask = saturate(baseMask + noiseOffset);
+            float threshold = saturate(_DissolveProgress + _ClipThreshold);
 
-            float dirAmount = crumble;
-            float normalAmount = crumble * (signedNoise + jitter) * 0.04;
+            float front = saturate(1.0 - abs(mask - threshold) / max(_VertexBand, 1e-5));
+            front *= front;
 
-            float3 offsetRef = (dirRef * dirAmount + refNormal * normalAmount)
-                             * displacementScale
-                             * (0.08 + _DustAmount * 0.10);
+            float amplitude = front * _VertexOffset;
+            if (amplitude <= 1e-6)
+            {
+                return float3(0.0, 0.0, 0.0);
+            }
 
-            return ReferenceToWorldDir(offsetRef);
+            float noiseB = SampleNoiseTriplanarLOD(refPos + refNormal * 0.23 + dirRef * 0.17, refNormal);
+            float signedNoise = noiseB * 2.0 - 1.0;
+            float jitter = sin(_Time.y * _VertexJitterSpeed + (noiseA + noiseB) * 6.2831853) * 0.12;
+
+            float3 dirPart = dirRef * (amplitude * _VertexDirectionInfluence);
+            float3 normalPart = refNormal * (amplitude * (signedNoise + jitter) * _VertexNormalInfluence * 0.2);
+
+            float rangeScale = min(max(abs(_HeightMax - _HeightMin), 1e-4), 1.0);
+            float3 offsetRef = (dirPart + normalPart) * rangeScale;
+            float3 offsetWS = ReferenceToWorldDir(offsetRef);
+            float maxOffset = max(_VertexMaxWorldOffset, 1e-5);
+            float offsetLen = length(offsetWS);
+            if (offsetLen > maxOffset)
+            {
+                offsetWS *= maxOffset / offsetLen;
+            }
+            return offsetWS;
         }
 
-        half3 EvaluateLightContribution(half3 albedo, half3 normalWS, half3 viewDirWS, Light lightData)
+        half3 EvaluateLight(half3 albedo, half3 normalWS, half3 viewDirWS, Light lightData)
         {
             half attenuation = lightData.distanceAttenuation * lightData.shadowAttenuation;
             half ndotl = saturate(dot(normalWS, lightData.direction));
+
             half3 diffuse = albedo * lightData.color * (ndotl * attenuation);
 
             half3 halfVec = SafeNormalize(lightData.direction + viewDirWS);
             half specPower = exp2(10.0h * _Smoothness + 1.0h);
-            half specTerm = pow(saturate(dot(normalWS, halfVec)), specPower) * _SpecularStrength * ndotl;
-            half3 specular = lightData.color * (specTerm * attenuation);
+            half spec = pow(saturate(dot(normalWS, halfVec)), specPower) * _SpecularStrength * ndotl;
+            half3 specular = lightData.color * (spec * attenuation);
 
             return diffuse + specular;
         }
@@ -274,7 +275,7 @@ Shader "Custom/URP/Ash Dissolve"
 
         Pass
         {
-            Name "ForwardAshDissolve"
+            Name "ForwardDisintegrate"
             Tags { "LightMode" = "UniversalForward" }
 
             Blend One Zero
@@ -310,8 +311,8 @@ Shader "Custom/URP/Ash Dissolve"
                 float4 positionCS : SV_POSITION;
                 float2 uv : TEXCOORD0;
                 float3 positionWS : TEXCOORD1;
-                float3 originWS : TEXCOORD2;
-                float3 originOS : TEXCOORD3;
+                float3 sourceWS : TEXCOORD2;
+                float3 sourceOS : TEXCOORD3;
                 half3 normalWS : TEXCOORD4;
                 half3 normalOS : TEXCOORD5;
                 half4 tangentWS : TEXCOORD6;
@@ -322,28 +323,31 @@ Shader "Custom/URP/Ash Dissolve"
 
             Varyings vert(Attributes input)
             {
-                Varyings output = (Varyings)0;
+                Varyings o = (Varyings)0;
                 UNITY_SETUP_INSTANCE_ID(input);
-                UNITY_TRANSFER_INSTANCE_ID(input, output);
-                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+                UNITY_TRANSFER_INSTANCE_ID(input, o);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
-                VertexNormalInputs normalInputs = GetVertexNormalInputs(input.normalOS, input.tangentOS);
-                float3 worldPos = TransformObjectToWorld(input.positionOS.xyz);
-                float3 displacedWS = worldPos + ComputeDisplacementWS(input.positionOS.xyz, worldPos, input.normalOS, normalInputs.normalWS);
+                VertexNormalInputs n = GetVertexNormalInputs(input.normalOS, input.tangentOS);
 
-                output.positionCS = TransformWorldToHClip(displacedWS);
-                output.positionWS = displacedWS;
-                output.originWS = worldPos;
-                output.originOS = input.positionOS.xyz;
-                output.normalWS = NormalizeNormalPerVertex(normalInputs.normalWS);
-                output.normalOS = normalize(input.normalOS);
+                float3 sourceWS = TransformObjectToWorld(input.positionOS.xyz);
+                float3 offsetWS = ComputeDisplacementWS(input.positionOS.xyz, sourceWS, input.normalOS, n.normalWS);
+                float3 displacedWS = sourceWS + offsetWS;
+
+                o.positionCS = TransformWorldToHClip(displacedWS);
+                o.positionWS = displacedWS;
+                o.sourceWS = sourceWS;
+                o.sourceOS = input.positionOS.xyz;
+                o.normalWS = NormalizeNormalPerVertex(n.normalWS);
+                o.normalOS = SafeNormalize(input.normalOS);
 
                 real tangentSign = input.tangentOS.w * GetOddNegativeScale();
-                output.tangentWS = half4(NormalizeNormalPerVertex(normalInputs.tangentWS), tangentSign);
+                o.tangentWS = half4(NormalizeNormalPerVertex(n.tangentWS), tangentSign);
 
-                output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
-                output.fogFactor = ComputeFogFactor(output.positionCS.z);
-                return output;
+                o.uv = TRANSFORM_TEX(input.uv, _BaseMap);
+                o.fogFactor = ComputeFogFactor(o.positionCS.z);
+
+                return o;
             }
 
             half4 frag(Varyings input) : SV_Target
@@ -351,8 +355,8 @@ Shader "Custom/URP/Ash Dissolve"
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-                DissolveData dissolve = EvaluateDissolve(input.originOS, input.originWS, input.normalOS, input.normalWS);
-                clip(dissolve.clipValue);
+                DissolveData d = EvaluateDissolve(input.sourceOS, input.sourceWS, input.normalOS, input.normalWS);
+                clip(d.clipValue);
 
                 half4 baseSample = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
                 half alpha = baseSample.a * _BaseColor.a;
@@ -362,25 +366,21 @@ Shader "Custom/URP/Ash Dissolve"
 
                 half3 albedo = baseSample.rgb * _BaseColor.rgb;
 
-                half3 normalGeomWS = SafeNormalize(input.normalWS);
-                half3 tangentWS = SafeNormalize(input.tangentWS.xyz);
-                half3 bitangentWS = SafeNormalize(cross(normalGeomWS, tangentWS) * input.tangentWS.w);
+                half3 nGeom = SafeNormalize(input.normalWS);
+                half3 t = SafeNormalize(input.tangentWS.xyz);
+                half3 b = SafeNormalize(cross(nGeom, t) * input.tangentWS.w);
 
                 half3 normalTS = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, input.uv), _BumpScale);
-                half3 normalMapWS = SafeNormalize(TransformTangentToWorld(normalTS, half3x3(tangentWS, bitangentWS, normalGeomWS)));
-                half3 normalWS = (dot(normalMapWS, normalMapWS) > 1e-4h) ? normalMapWS : normalGeomWS;
-                normalWS = (dot(normalWS, normalWS) > 1e-4h) ? normalWS : half3(0.0h, 1.0h, 0.0h);
-
-                float ashZone = saturate(1.0 - dissolve.clipValue / max(_EdgeWidth * 2.5, 1e-5));
-                ashZone *= _BurnDarkening;
-
-                float dustMask = saturate(dissolve.edge * _DustAmount * (0.5 + dissolve.noise));
-                half3 ashedAlbedo = lerp(albedo, albedo * _AshTint.rgb, ashZone);
-                ashedAlbedo = lerp(ashedAlbedo, _AshTint.rgb, dustMask * 0.35);
+                half3 normalWS = SafeNormalize(TransformTangentToWorld(normalTS, half3x3(t, b, nGeom)));
+                normalWS = (dot(normalWS, normalWS) > 1e-4h) ? normalWS : nGeom;
+                float ashBand = saturate(1.0 - d.clipValue / max(_AshWidth, 1e-5));
+                float ashNoise = saturate(0.75 + (d.noise * 2.0 - 1.0) * 0.25);
+                half3 ashAlbedo = lerp(albedo, albedo * _AshTint.rgb, ashBand * ashNoise * _BurnDarkening);
 
                 half3 viewDirWS = SafeNormalize(GetWorldSpaceViewDir(input.positionWS));
-                half3 lit = ashedAlbedo * 0.12h;
-                lit += ashedAlbedo * max(half3(0.0h, 0.0h, 0.0h), SampleSH(normalWS));
+
+                half3 lit = ashAlbedo * 0.12h;
+                lit += ashAlbedo * max(half3(0.0h, 0.0h, 0.0h), SampleSH(normalWS));
 
                 half4 shadowMask = half4(1.0h, 1.0h, 1.0h, 1.0h);
                 Light mainLight;
@@ -390,27 +390,31 @@ Shader "Custom/URP/Ash Dissolve"
                 #else
                     mainLight = GetMainLight();
                 #endif
-                lit += EvaluateLightContribution(ashedAlbedo, normalWS, viewDirWS, mainLight);
+                lit += EvaluateLight(ashAlbedo, normalWS, viewDirWS, mainLight);
 
                 #if defined(_ADDITIONAL_LIGHTS)
                     uint lightCount = GetAdditionalLightsCount();
                     [loop]
-                    for (uint lightIndex = 0u; lightIndex < lightCount; ++lightIndex)
+                    for (uint i = 0u; i < lightCount; ++i)
                     {
-                        Light additionalLight;
+                        Light add;
                         #if defined(_ADDITIONAL_LIGHT_SHADOWS)
-                            additionalLight = GetAdditionalLight(lightIndex, input.positionWS, shadowMask);
+                            add = GetAdditionalLight(i, input.positionWS, shadowMask);
                         #else
-                            additionalLight = GetAdditionalLight(lightIndex, input.positionWS);
+                            add = GetAdditionalLight(i, input.positionWS);
                         #endif
-                        lit += EvaluateLightContribution(ashedAlbedo, normalWS, viewDirWS, additionalLight);
+                        lit += EvaluateLight(ashAlbedo, normalWS, viewDirWS, add);
                     }
                 #endif
+                half edgePulse = 0.75h + 0.25h * sin(_Time.y * _VertexJitterSpeed + d.noise * 6.2831853);
+                half edgeNoise = saturate(1.0h + (d.noise * 2.0h - 1.0h) * _EdgeNoiseBoost);
+                half edgeMask = saturate(d.edge * edgeNoise);
+                edgeMask = edgeMask * edgeMask;
 
-                half edgePulse = 0.7h + 0.3h * sin(_Time.y * _VertexJitterSpeed + dissolve.noise * 6.2831853);
-                half edgeMask = pow(saturate(dissolve.edge), 2.0h);
-                half3 hotEdgeColor = lerp(_EdgeColor.rgb * 0.55h, _EdgeColor.rgb * 1.75h + half3(1.2h, 0.45h, 0.08h), saturate(_EdgeStyle));
-                half3 edgeEmission = hotEdgeColor * (edgeMask * _EdgeIntensity * edgePulse);
+                half3 edgeColorAsh = _EdgeColor.rgb * 0.6h;
+                half3 edgeColorHot = _EdgeColor.rgb * 1.8h + half3(1.0h, 0.4h, 0.08h);
+                half3 edgeColor = lerp(edgeColorAsh, edgeColorHot, saturate(_EdgeStyle));
+                half3 edgeEmission = edgeColor * (edgeMask * _EdgeEmission * edgePulse);
 
                 half3 finalColor = lit + edgeEmission;
                 finalColor = MixFog(finalColor, input.fogFactor);
@@ -436,7 +440,6 @@ Shader "Custom/URP/Ash Dissolve"
 
             #pragma shader_feature_local _ALPHATEST_ON
             #pragma shader_feature_local _HEIGHTSPACE_OBJECTSPACE _HEIGHTSPACE_WORLDSPACE
-
             #pragma multi_compile_instancing
             #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
 
@@ -452,8 +455,8 @@ Shader "Custom/URP/Ash Dissolve"
             {
                 float4 positionCS : SV_POSITION;
                 float2 uv : TEXCOORD0;
-                float3 originWS : TEXCOORD1;
-                float3 originOS : TEXCOORD2;
+                float3 sourceWS : TEXCOORD1;
+                float3 sourceOS : TEXCOORD2;
                 float3 normalWS : TEXCOORD3;
                 float3 normalOS : TEXCOORD4;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
@@ -462,22 +465,23 @@ Shader "Custom/URP/Ash Dissolve"
 
             Varyings vertShadow(Attributes input)
             {
-                Varyings output = (Varyings)0;
+                Varyings o = (Varyings)0;
                 UNITY_SETUP_INSTANCE_ID(input);
-                UNITY_TRANSFER_INSTANCE_ID(input, output);
-                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+                UNITY_TRANSFER_INSTANCE_ID(input, o);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
                 float3 normalWS = TransformObjectToWorldNormal(input.normalOS);
-                float3 worldPos = TransformObjectToWorld(input.positionOS.xyz);
-                float3 displacedWS = worldPos + ComputeDisplacementWS(input.positionOS.xyz, worldPos, input.normalOS, normalWS);
+                float3 sourceWS = TransformObjectToWorld(input.positionOS.xyz);
+                float3 offsetWS = ComputeDisplacementWS(input.positionOS.xyz, sourceWS, input.normalOS, normalWS);
+                float3 displacedWS = sourceWS + offsetWS;
 
-                output.positionCS = TransformWorldToHClip(displacedWS);
-                output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
-                output.originWS = worldPos;
-                output.originOS = input.positionOS.xyz;
-                output.normalWS = normalWS;
-                output.normalOS = input.normalOS;
-                return output;
+                o.positionCS = TransformWorldToHClip(displacedWS);
+                o.uv = TRANSFORM_TEX(input.uv, _BaseMap);
+                o.sourceWS = sourceWS;
+                o.sourceOS = input.positionOS.xyz;
+                o.normalWS = normalWS;
+                o.normalOS = input.normalOS;
+                return o;
             }
 
             half4 fragShadow(Varyings input) : SV_Target
@@ -485,8 +489,8 @@ Shader "Custom/URP/Ash Dissolve"
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-                DissolveData dissolve = EvaluateDissolve(input.originOS, input.originWS, input.normalOS, input.normalWS);
-                clip(dissolve.clipValue);
+                DissolveData d = EvaluateDissolve(input.sourceOS, input.sourceWS, input.normalOS, input.normalWS);
+                clip(d.clipValue);
 
                 #if defined(_ALPHATEST_ON)
                     half alpha = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv).a * _BaseColor.a;
@@ -514,7 +518,6 @@ Shader "Custom/URP/Ash Dissolve"
 
             #pragma shader_feature_local _ALPHATEST_ON
             #pragma shader_feature_local _HEIGHTSPACE_OBJECTSPACE _HEIGHTSPACE_WORLDSPACE
-
             #pragma multi_compile_instancing
 
             struct Attributes
@@ -529,8 +532,8 @@ Shader "Custom/URP/Ash Dissolve"
             {
                 float4 positionCS : SV_POSITION;
                 float2 uv : TEXCOORD0;
-                float3 originWS : TEXCOORD1;
-                float3 originOS : TEXCOORD2;
+                float3 sourceWS : TEXCOORD1;
+                float3 sourceOS : TEXCOORD2;
                 float3 normalWS : TEXCOORD3;
                 float3 normalOS : TEXCOORD4;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
@@ -539,22 +542,23 @@ Shader "Custom/URP/Ash Dissolve"
 
             Varyings vertDepth(Attributes input)
             {
-                Varyings output = (Varyings)0;
+                Varyings o = (Varyings)0;
                 UNITY_SETUP_INSTANCE_ID(input);
-                UNITY_TRANSFER_INSTANCE_ID(input, output);
-                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+                UNITY_TRANSFER_INSTANCE_ID(input, o);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
                 float3 normalWS = TransformObjectToWorldNormal(input.normalOS);
-                float3 worldPos = TransformObjectToWorld(input.positionOS.xyz);
-                float3 displacedWS = worldPos + ComputeDisplacementWS(input.positionOS.xyz, worldPos, input.normalOS, normalWS);
+                float3 sourceWS = TransformObjectToWorld(input.positionOS.xyz);
+                float3 offsetWS = ComputeDisplacementWS(input.positionOS.xyz, sourceWS, input.normalOS, normalWS);
+                float3 displacedWS = sourceWS + offsetWS;
 
-                output.positionCS = TransformWorldToHClip(displacedWS);
-                output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
-                output.originWS = worldPos;
-                output.originOS = input.positionOS.xyz;
-                output.normalWS = normalWS;
-                output.normalOS = input.normalOS;
-                return output;
+                o.positionCS = TransformWorldToHClip(displacedWS);
+                o.uv = TRANSFORM_TEX(input.uv, _BaseMap);
+                o.sourceWS = sourceWS;
+                o.sourceOS = input.positionOS.xyz;
+                o.normalWS = normalWS;
+                o.normalOS = input.normalOS;
+                return o;
             }
 
             half4 fragDepth(Varyings input) : SV_Target
@@ -562,8 +566,8 @@ Shader "Custom/URP/Ash Dissolve"
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-                DissolveData dissolve = EvaluateDissolve(input.originOS, input.originWS, input.normalOS, input.normalWS);
-                clip(dissolve.clipValue);
+                DissolveData d = EvaluateDissolve(input.sourceOS, input.sourceWS, input.normalOS, input.normalWS);
+                clip(d.clipValue);
 
                 #if defined(_ALPHATEST_ON)
                     half alpha = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv).a * _BaseColor.a;
