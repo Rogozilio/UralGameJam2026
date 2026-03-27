@@ -19,8 +19,16 @@ namespace Scripts
         private float _remainingTime;
         private bool _isPaused;
 
+        private void Awake()
+        {
+            isFastTime = false;
+            _isPaused = false;
+        }
+
         public void StartLifeTimer()
         {
+            StopLifeTimer();
+            isFastTime = false;
             shapeController.fire.Stop();
             shapeController.fire.Clear();
             shapeController.fire.Play();

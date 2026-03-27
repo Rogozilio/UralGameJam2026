@@ -33,11 +33,25 @@ namespace Scripts
         private void Start()
         {
             _player = FindObjectOfType<Player>();
+            if (_player != null)
+                _player.onStartDeath.AddListener(StopPushing);
             _startTargetPosition = target.position;
+        }
+
+        private void OnDestroy()
+        {
+            if (_player != null)
+                _player.onStartDeath.RemoveListener(StopPushing);
         }
 
         private void Update()
         {
+            if (!CanPush())
+            {
+                StopPushing();
+                return;
+            }
+
             if (!_isPushing) return;
 
             var dot = Vector3.Dot(-_player.tempPointMove.transform.right, pushPoint.forward);
@@ -79,6 +93,12 @@ namespace Scripts
 
         private void LateUpdate()
         {
+            if (!CanPush())
+            {
+                StopPushing();
+                return;
+            }
+
             if (!_isPushing)
             {
                 StopPushLoopSound();
@@ -152,7 +172,7 @@ namespace Scripts
 
         private void OnTriggerStay(Collider other)
         {
-            if (other.CompareTag("Player"))
+            if (other.CompareTag("Player") && CanPush())
                 _isPushing = true;
         }
 
@@ -194,9 +214,20 @@ namespace Scripts
 
         public void Restart()
         {
+            StopPushing();
+        }
+
+        private bool CanPush()
+        {
+            return _player != null && !_player.isDeath && _player.characterController.enabled;
+        }
+
+        private void StopPushing()
+        {
             _isPushing = false;
             StopPushLoopSound();
-            _player.SetIsPushAnim = false;
+            if (_player != null)
+                _player.SetIsPushAnim = false;
             _isBegin = true;
         }
     }
