@@ -38,7 +38,10 @@ public class Player : MonoBehaviour, IRestart
     public bool IsActive
     {
         get => isActive;
-        set => isActive = value;
+        set
+        {
+            isActive = value;
+        }
     }
 
     public CharacterController characterController;
