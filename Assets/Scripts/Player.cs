@@ -18,6 +18,7 @@ public class Player : MonoBehaviour, IRestart
     public Animator animator;
     public Transform render;
     public AshSpawner ashSpawner;
+    public FootstepAudio footstepAudio;
     public Transform respawn1;
     public Transform respawn2;
     public bool isTutorial;
@@ -118,6 +119,9 @@ public class Player : MonoBehaviour, IRestart
         // Cursor.visible = false;
 
         animator.applyRootMotion = false;
+
+        if (footstepAudio == null)
+            footstepAudio = GetComponentInChildren<FootstepAudio>();
         
         ResetOriginPositionAndRotation();
         lifeTime.OnLifeTimeEnded += RestartNow;
@@ -144,6 +148,7 @@ public class Player : MonoBehaviour, IRestart
 
     private void OnStartDie()
     {
+        footstepAudio?.ResetSurfaceTypeToDefault();
         lifeTime.isFastTime = true;
         animator.CrossFade("Die", 0.3f);
         ashSpawner.Spawn();
