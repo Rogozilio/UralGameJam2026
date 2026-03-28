@@ -125,7 +125,7 @@ Material:
     - _GradientCenterY: 0.49
     - _GradientEnabled: 1
     - _GradientEnd: 0.55
-    - _GradientFill: 0
+    - _GradientFill: 0.842
     - _GradientInvert: 1
     - _GradientSize: 1
     - _GradientSoftness: 0.053
