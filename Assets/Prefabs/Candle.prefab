@@ -59,7 +59,7 @@ MonoBehaviour:
   - {fileID: 7865924248191967263}
   light: {fileID: 1447273365782035309}
   audioSource: {fileID: 4960121610259339895}
-  startBurnClip: {fileID: 8300000, guid: 3206184cb2f67e04094aea6b49d12f02, type: 3}
+  startBurnClip: {fileID: 8300000, guid: 674f29f3882bdd6408db6dd3fff7f205, type: 3}
   onFire:
     m_PersistentCalls:
       m_Calls: []

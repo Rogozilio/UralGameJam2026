@@ -91,7 +91,7 @@ public class UIMenu : MonoBehaviour
         DefaultMenu?.Invoke();
         isMainMenu = false;
         Cursor.visible = true;
-        Cursor.lockState = CursorLockMode.Confined;
+        //Cursor.lockState = CursorLockMode.Confined;
     }
 
     private void ChangeVolume()
