@@ -2,6 +2,7 @@ using System;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Audio;
+using UnityEngine.Events;
 using UnityEngine.UI;
 using Zenject;
 using Input = Scripts.Input;
@@ -12,8 +13,10 @@ public class UIMenu : MonoBehaviour
     
     public AudioMixer audioMixer;
     public GameObject mainPanel;
-    
+
+    public Button btnNewGame;
     public Button btnContinue;
+    public Button btnOptions;
     public Button btnRestart;
     public Button btnExit;
     public Slider mouseSensitivity;
@@ -22,16 +25,30 @@ public class UIMenu : MonoBehaviour
     public Slider volumeVoice;
     public Slider volumeVFX;
     public Slider volumeCutscene;
+    public UnityEvent ChangeMenu;
+    public UnityEvent DefaultMenu;
 
     public float GetMouseSens => mouseSensitivity.value;
     
     public event Action OnResumed;
 
+    private bool _isMainMenu;
+
+    public bool isMainMenu
+    {
+        get => _isMainMenu;
+        set
+        {
+            _isMainMenu = value;
+            mainPanel.SetActive(value);
+        }
+    }
+
     private void Awake()
     {
         mainPanel.SetActive(false);
         // Скрыть курсор
-        Cursor.visible = false;
+        Cursor.visible = true;
         
         // Заблокировать курсор в центре экрана (опционально)
         Cursor.lockState = CursorLockMode.Locked;
@@ -41,6 +58,7 @@ public class UIMenu : MonoBehaviour
 
     private void OnEnable()
     {
+        btnNewGame.onClick.AddListener(Hide);
         btnContinue.onClick.AddListener(Hide);
         btnRestart.onClick.AddListener(Hide);
         btnExit.onClick.AddListener(ExitGame);
@@ -52,12 +70,28 @@ public class UIMenu : MonoBehaviour
     {
         ChangeVolume();
     }
-
-    private void FixedUpdate()
+    
+    private void Update()
     {
         if(!mainPanel.activeSelf) return;
 
         ChangeVolume();
+    }
+
+    public void ShowMainMenu()
+    {
+        ChangeMenu?.Invoke();
+        isMainMenu = true;
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.Confined;
+    }
+    
+    public void ShowGameMenu()
+    {
+        DefaultMenu?.Invoke();
+        isMainMenu = false;
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.Confined;
     }
 
     private void ChangeVolume()
@@ -71,6 +105,7 @@ public class UIMenu : MonoBehaviour
 
     private void OnDisable()
     {
+        btnNewGame.onClick.RemoveListener(Hide);
         btnContinue.onClick.RemoveListener(Hide);
         btnRestart.onClick.RemoveListener(Hide);
         btnExit.onClick.RemoveListener(ExitGame);
@@ -107,6 +142,8 @@ public class UIMenu : MonoBehaviour
 
     private void HideOrShow()
     {
+        if(_isMainMenu) return;
+        
         if (mainPanel.activeSelf)
             Hide();
         else

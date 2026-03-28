@@ -13,6 +13,7 @@ namespace Scripts
         public Vector2 playerMove => _input.Player.Move.ReadValue<Vector2>();
         public Vector2 playerLook => _input.Player.Look.ReadValue<Vector2>();
         public bool isJump => _input.Player.Jump.WasPressedThisFrame();
+        public bool isJumpHeld => _input.Player.Jump.IsPressed();
         public bool isGamepad => _input.Player.Look.activeControl?.device is Gamepad;
         public bool isEscape => _input.Player.Esc.WasPressedThisFrame();
         

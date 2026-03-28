@@ -9,6 +9,7 @@ namespace Scripts
         public ParticleSystem[] particles;
         public Light light;
         public AudioSource audioSource;
+        public AudioClip startBurnClip;
 
         private bool _isActive;
 
@@ -27,6 +28,8 @@ namespace Scripts
             audioSource.Play();
             
             _isActive = true;
+            
+            audioSource.PlayOneShot(startBurnClip, 0.3f);
             
             onFire?.Invoke();
         }
