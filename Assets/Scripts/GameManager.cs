@@ -1,9 +1,11 @@
+using System;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Playables;
 
 public enum GameStep
 {
+    Menu,
     CutsceneBegin,
     Tutorial,
     CutsceneMatchToOpenBox,
@@ -27,6 +29,7 @@ public class GameManager : MonoBehaviour
     public PlayableDirector cutsceneDropAxe;
 
     [Space] 
+    public UnityEvent Menu;
     public UnityEvent Tutorial;
     public UnityEvent mainGame;
     public UnityEvent lastGame;
@@ -36,10 +39,16 @@ public class GameManager : MonoBehaviour
         SwitchGameStep(gameStep);
     }
 
+    private void Start()
+    {
+        SwitchGameStep(gameStep);
+    }
+
     private void OnEnable()
     {
         cutsceneBegin.stopped += (ctx) => SwitchGameStep(GameStep.Tutorial);
         cutsceneMatchToOpenBox.stopped +=(ctx) => SwitchGameStep(GameStep.MainGame);
+        cutsceneDropAxe.stopped +=(ctx) => SwitchGameStep(GameStep.lastGame);
       
     }
 
@@ -47,6 +56,7 @@ public class GameManager : MonoBehaviour
     {
         cutsceneBegin.stopped -= (ctx) => SwitchGameStep(GameStep.Tutorial);
         cutsceneMatchToOpenBox.stopped -=(ctx) => SwitchGameStep(GameStep.MainGame);
+        cutsceneDropAxe.stopped -=(ctx) => SwitchGameStep(GameStep.lastGame);
     }
 
     public void SwitchOn(int index)
@@ -60,6 +70,9 @@ public class GameManager : MonoBehaviour
         
         switch (this.gameStep)
         {
+            case GameStep.Menu:
+                Menu?.Invoke();
+                break;
             case GameStep.CutsceneBegin:
                 PlayCutscene(cutsceneBegin);
                 break;

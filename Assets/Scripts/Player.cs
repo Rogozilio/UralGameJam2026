@@ -21,6 +21,7 @@ public class Player : MonoBehaviour, IRestart
     public Transform respawn1;
     public Transform respawn2;
     public bool isTutorial;
+    public bool isActive = true;
 
     public bool IsTutorial
     {
@@ -34,7 +35,12 @@ public class Player : MonoBehaviour, IRestart
         }
     }
 
-    [Header("CharacterController")]
+    public bool IsActive
+    {
+        get => isActive;
+        set => isActive = value;
+    }
+
     public CharacterController characterController;
     public float moveSpeed = 5f;
     public float jumpHeight = 1.5f;
@@ -105,8 +111,8 @@ public class Player : MonoBehaviour, IRestart
         float rawPitch = cameraTarget.eulerAngles.x;
         _pitch = rawPitch > 180f ? rawPitch - 360f : rawPitch;
         
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        // Cursor.lockState = CursorLockMode.Locked;
+        // Cursor.visible = false;
 
         animator.applyRootMotion = false;
         
@@ -171,7 +177,6 @@ public class Player : MonoBehaviour, IRestart
         isDeath = false;
         lifeTime.isFastTime = false;
         lifeTime.shapeController.isFireZero = false;
-        //ashSpawner.Spawn();
         RestartSystem.Restart();
     }
     
@@ -179,7 +184,7 @@ public class Player : MonoBehaviour, IRestart
 
     private void Update()
     {
-        if (Time.timeScale == 0f) return;
+        if (Time.timeScale == 0f || !isActive) return;
         
         MoveCamera();
         if (isDeath && characterController.isGrounded)
@@ -297,9 +302,9 @@ public class Player : MonoBehaviour, IRestart
         _originRenderRotation = render.localRotation;
     }
 
-    public void Death()
+    public void Death(bool isDeathNow = false)
     {
-        if (!isDeath) return;
+        if (!isDeath && !isDeathNow) return;
         
         StartCoroutine(WaitEndDeath(2));
     }
