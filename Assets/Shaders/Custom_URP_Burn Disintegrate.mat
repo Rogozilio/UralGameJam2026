@@ -34,7 +34,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _BumpScale: 2
-    - _BurnProgress: 0
+    - _BurnProgress: 1
     - _BurnSoftness: 0.06
     - _ChunkScale: 2
     - _Cull: 2
