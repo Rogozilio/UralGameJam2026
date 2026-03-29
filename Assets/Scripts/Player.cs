@@ -10,6 +10,11 @@ using Input = Scripts.Input;
 
 public class Player : MonoBehaviour, IRestart
 {
+    private const float DefaultSlowdownMultiplier = 1f;
+    private const float SlowdownMultiplier = 0.4f;
+    private const float DefaultSpeedInZhiza = 1f;
+    private const float SlowdownSpeedInZhiza = 0.6f;
+
     [Inject] private Input _input;
     [Inject] private UIMenu _uiMenu;
     
@@ -103,6 +108,14 @@ public class Player : MonoBehaviour, IRestart
     
     public bool isMove => _input.playerMove.magnitude > 0;
 
+    public bool isSwim
+    {
+        set
+        {
+            animator.SetBool("isSwim", value);
+        }
+    }
+
     public bool SetIsPushAnim
     {
         set => animator.SetBool("isPush", value);
@@ -119,6 +132,7 @@ public class Player : MonoBehaviour, IRestart
         // Cursor.visible = false;
 
         animator.applyRootMotion = false;
+        SetSlowdownState(false);
 
         if (footstepAudio == null)
             footstepAudio = GetComponentInChildren<FootstepAudio>();
@@ -345,8 +359,7 @@ public class Player : MonoBehaviour, IRestart
             lifeTime.RestartLifeTimer();
         }
 
-        _speedSlowdown = 1f;
-        _disableJump = false;
+        SetSlowdownState(false);
         _coyoteTimeCounter = 0f;
         _jumpBufferCounter = 0f;
         IsStaticCamera = false;
@@ -415,6 +428,13 @@ public class Player : MonoBehaviour, IRestart
     private ClimbData _climbData;
     private bool _justResumed;
 
+    private void SetSlowdownState(bool isSlowdown)
+    {
+        _speedSlowdown = isSlowdown ? SlowdownMultiplier : DefaultSlowdownMultiplier;
+        _disableJump = isSlowdown;
+        animator.SetFloat("SpeedInZhiza", isSlowdown ? SlowdownSpeedInZhiza : DefaultSpeedInZhiza);
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Climb"))
@@ -424,8 +444,7 @@ public class Player : MonoBehaviour, IRestart
         }
         else if (other.CompareTag("Slowdown"))
         {
-            _speedSlowdown = 0.4f;
-            _disableJump = true;
+            SetSlowdownState(true);
         }
     }
 
@@ -433,8 +452,7 @@ public class Player : MonoBehaviour, IRestart
     {
         if (other.CompareTag("Slowdown"))
         {
-            _speedSlowdown = 0.4f;
-            _disableJump = true;
+            SetSlowdownState(true);
         }
     }
 
@@ -442,8 +460,7 @@ public class Player : MonoBehaviour, IRestart
     {
         if (other.CompareTag("Slowdown"))
         {
-            _speedSlowdown = 1f;
-            _disableJump = false;
+            SetSlowdownState(false);
         }
     }
 
