@@ -58,7 +58,7 @@ Material:
     - _BUILTIN_QueueOffset: 0
     - _Blend: 0
     - _CastShadows: 1
-    - _Caustic_Strength: 2
+    - _Caustic_Strength: 0.7
     - _Cull: 0
     - _Cutoff: 0
     - _CutoffSpeed: -0.4
@@ -72,7 +72,7 @@ Material:
     - _MaxCutoff: 0
     - _MaxDist: 250
     - _MaxWaveDist: 0.1
-    - _NormalStrength: 0.1
+    - _NormalStrength: 1.63
     - _Normal_Strength: 0.1
     - _Offset: 0.9
     - _QueueControl: 0
@@ -82,8 +82,8 @@ Material:
     - _Speed: 0.05
     - _SrcBlend: 5
     - _Surface: 1
-    - _Tiling: 0.01
-    - _Transparency: 0.165
+    - _Tiling: 0.13
+    - _Transparency: 0.72
     - _UseFoam: 0
     - _Use_Foam: 1
     - _WaveDist: 5
