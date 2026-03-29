@@ -25671,7 +25671,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ef280b87ccaef244861010941631a05, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
-  gameStep: 0
+  gameStep: 4
   cutsceneBegin: {fileID: 1480974882}
   cutsceneMatchToOpenBox: {fileID: 0}
   cutsceneRespawn: {fileID: 0}
@@ -26265,6 +26265,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1886279617}
     - target: {fileID: 4012926181333665523, guid: 84ffd34e923d90841b57a322573cee90, type: 3}
+      propertyPath: deathSound
+      value: 
+      objectReference: {fileID: 8300000, guid: 963d42ac119407842ba135ed2172a90e, type: 3}
+    - target: {fileID: 4012926181333665523, guid: 84ffd34e923d90841b57a322573cee90, type: 3}
       propertyPath: nextCamera
       value: 
       objectReference: {fileID: 919607667}
@@ -26284,6 +26288,10 @@ PrefabInstance:
       propertyPath: tempPointMove
       value: 
       objectReference: {fileID: 441619152}
+    - target: {fileID: 4012926181333665523, guid: 84ffd34e923d90841b57a322573cee90, type: 3}
+      propertyPath: deathSoundVolume
+      value: 0.6
+      objectReference: {fileID: 0}
     - target: {fileID: 4012926181333665523, guid: 84ffd34e923d90841b57a322573cee90, type: 3}
       propertyPath: staticCameraTransform
       value: 
@@ -32385,7 +32393,7 @@ Camera:
     height: 1
   near clip plane: 0.1
   far clip plane: 5000
-  field of view: 40
+  field of view: 60.000004
   orthographic: 0
   orthographic size: 10
   m_Depth: -1
@@ -32411,8 +32419,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 824270844}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0.7070463, z: 0, w: 0.70716727}
-  m_LocalPosition: {x: -3.7859998, y: -5.0191503, z: 3.9786134}
+  m_LocalRotation: {x: 0.086834945, y: 0.95548934, z: -0.2007411, w: 0.19799729}
+  m_LocalPosition: {x: 29.766579, y: 1.0820901, z: 7.988}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

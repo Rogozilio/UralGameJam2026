@@ -24,6 +24,8 @@ public class Player : MonoBehaviour, IRestart
     public Transform render;
     public AshSpawner ashSpawner;
     public FootstepAudio footstepAudio;
+    public AudioClip deathSound;
+    [Range(0f, 1f)] public float deathSoundVolume = 1f;
     public Transform respawn1;
     public Transform respawn2;
     public bool isTutorial;
@@ -163,6 +165,9 @@ public class Player : MonoBehaviour, IRestart
     private void OnStartDie()
     {
         footstepAudio?.ResetSurfaceTypeToDefault();
+        if (deathSound != null)
+            AudioSource.PlayClipAtPoint(deathSound, transform.position, deathSoundVolume);
+
         lifeTime.isFastTime = true;
         animator.CrossFade("Die", 0.3f);
         ashSpawner.Spawn();
