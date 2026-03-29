@@ -218,7 +218,11 @@ public class Player : MonoBehaviour, IRestart
 
     private void Update()
     {
-        if (Time.timeScale == 0f || !isActive) return;
+        if (Time.timeScale == 0f || !isActive)
+        { 
+            animator.SetInteger("move", 0);
+            return;
+        }
         
         MoveCamera();
         if (isDeath && characterController.isGrounded)
