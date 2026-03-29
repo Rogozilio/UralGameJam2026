@@ -1,0 +1,7 @@
+<linker>
+  <assembly fullname="Assembly-CSharp">
+    <type fullname="Scripts.Cutscene.MoveFromAToBTrack" preserve="all"/>
+    <type fullname="Scripts.Cutscene.MoveFromAToBClip" preserve="all"/>
+    <type fullname="Scripts.Cutscene.MoveFromAToBBehaviour" preserve="all"/>
+  </assembly>
+</linker>

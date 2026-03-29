@@ -11,7 +11,8 @@ public enum GameStep
     CutsceneMatchToOpenBox,
     MainGame,
     СutsceneDropAxe,
-    lastGame
+    lastGame,
+    CutsceneEnd
 }
 
 public class GameManager : MonoBehaviour
@@ -27,6 +28,8 @@ public class GameManager : MonoBehaviour
 
     [InspectorName("CutsceneMentosGun->Toaster")]
     public PlayableDirector cutsceneDropAxe;
+    
+    public PlayableDirector cutsceneEnd;
 
     [Space] 
     public UnityEvent Menu;
@@ -90,6 +93,9 @@ public class GameManager : MonoBehaviour
                 break;
             case GameStep.lastGame:
                 lastGame?.Invoke();
+                break;
+            case GameStep.CutsceneEnd:
+                PlayCutscene(cutsceneEnd);
                 break;
         }
     }
