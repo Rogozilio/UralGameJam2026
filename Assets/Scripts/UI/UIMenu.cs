@@ -46,6 +46,8 @@ public class UIMenu : MonoBehaviour
 
     private void Awake()
     {
+        ChangeVolume();
+        
         mainPanel.SetActive(false);
         // Скрыть курсор
         Cursor.visible = true;
@@ -58,17 +60,14 @@ public class UIMenu : MonoBehaviour
 
     private void OnEnable()
     {
+        ChangeVolume();
+        
         btnNewGame.onClick.AddListener(Hide);
         btnContinue.onClick.AddListener(Hide);
         btnRestart.onClick.AddListener(Hide);
         btnExit.onClick.AddListener(ExitGame);
         
         mouseSensitivity.onValueChanged.AddListener(_input.ChangeMouseSensitivity);
-    }
-
-    private void Start()
-    {
-        ChangeVolume();
     }
     
     private void Update()
