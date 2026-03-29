@@ -25976,7 +25976,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ef280b87ccaef244861010941631a05, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
-  gameStep: 0
+  gameStep: 4
   cutsceneBegin: {fileID: 1480974882}
   cutsceneMatchToOpenBox: {fileID: 0}
   cutsceneRespawn: {fileID: 0}
@@ -26561,7 +26561,7 @@ PrefabInstance:
     - target: {fileID: 4012926181333665523, guid: 84ffd34e923d90841b57a322573cee90, type: 3}
       propertyPath: respawn2
       value: 
-      objectReference: {fileID: 1184091654}
+      objectReference: {fileID: 614714243}
     - target: {fileID: 4012926181333665523, guid: 84ffd34e923d90841b57a322573cee90, type: 3}
       propertyPath: m_Enabled
       value: 1
@@ -57585,6 +57585,10 @@ PrefabInstance:
     - target: {fileID: 823780260984147700, guid: 5851f8b9d8f1ce34d94d7ae0dd534845, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -468
+      objectReference: {fileID: 0}
+    - target: {fileID: 840447247753694375, guid: 5851f8b9d8f1ce34d94d7ae0dd534845, type: 3}
+      propertyPath: m_Value
+      value: 0.25
       objectReference: {fileID: 0}
     - target: {fileID: 914430695967283158, guid: 5851f8b9d8f1ce34d94d7ae0dd534845, type: 3}
       propertyPath: m_Pivot.x

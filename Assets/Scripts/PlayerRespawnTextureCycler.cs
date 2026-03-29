@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Scripts
 {
-    public class PlayerRespawnTextureCycler : MonoBehaviour, IRestart
+    public class PlayerRespawnTextureCycler : MonoBehaviour
     {
         private static readonly int BaseMapId = Shader.PropertyToID("_BaseMap");
         private static readonly int DissolveProgressId = Shader.PropertyToID("_DissolveProgress");
@@ -22,7 +22,22 @@ namespace Scripts
                 targetRenderer = GetComponentInChildren<Renderer>();
         }
 
-        public void Restart()
+        public Material TargetMaterial
+        {
+            get
+            {
+                if (targetRenderer == null)
+                    return null;
+
+                Material[] materials = targetRenderer.materials;
+                if (materialIndex < 0 || materialIndex >= materials.Length)
+                    return null;
+
+                return materials[materialIndex];
+            }
+        }
+
+        public void AdvanceTexture()
         {
             if (targetRenderer == null || textures == null || textures.Length == 0)
                 return;
@@ -33,11 +48,9 @@ namespace Scripts
 
         private void ApplyTexture(Texture texture)
         {
-            Material[] materials = targetRenderer.materials;
-            if (materialIndex < 0 || materialIndex >= materials.Length)
+            Material material = TargetMaterial;
+            if (material == null)
                 return;
-
-            Material material = materials[materialIndex];
             if (!material.HasProperty(BaseMapId))
                 return;
 

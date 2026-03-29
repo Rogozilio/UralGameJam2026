@@ -96,6 +96,7 @@ public class Player : MonoBehaviour, IRestart
     private float _speedSlowdown = 1f;
     private bool _disableJump;
     private bool _blockJumpUntilRelease;
+    private PlayerRespawnTextureCycler _respawnTextureCycler;
 
     [SerializeField]
     private bool isIdleFire;
@@ -135,6 +136,7 @@ public class Player : MonoBehaviour, IRestart
 
         animator.applyRootMotion = false;
         SetSlowdownState(false);
+        _respawnTextureCycler = GetComponent<PlayerRespawnTextureCycler>();
 
         if (footstepAudio == null)
             footstepAudio = GetComponentInChildren<FootstepAudio>();
@@ -176,6 +178,10 @@ public class Player : MonoBehaviour, IRestart
     
     private IEnumerator LaunchDisintegrate()
     {
+        var dissolveMaterial = GetDisintegrateMaterial();
+        if (dissolveMaterial == null)
+            yield break;
+
         lifeTime.shapeController.fire.Stop();
         lifeTime.shapeController.fire.Clear();
         while (lifeTime.shapeController.blendValue < 0.98f)
@@ -183,20 +189,20 @@ public class Player : MonoBehaviour, IRestart
             yield return new WaitForFixedUpdate();
         }
         
-        disintegrate.SetFloat("_DissolveProgress", 0);
+        dissolveMaterial.SetFloat("_DissolveProgress", 0);
         lifeTime.shapeController.isFireZero = true;
         
         var step = 0.01f;
-        var dissolveProgress = disintegrate.GetFloat("_DissolveProgress");
+        var dissolveProgress = dissolveMaterial.GetFloat("_DissolveProgress");
 
         while (dissolveProgress < 1)
         {
             dissolveProgress += step;
-            disintegrate.SetFloat("_DissolveProgress", dissolveProgress);
+            dissolveMaterial.SetFloat("_DissolveProgress", dissolveProgress);
             yield return new WaitForFixedUpdate();
         }
         
-        disintegrate.SetFloat("_DissolveProgress", 0);
+        dissolveMaterial.SetFloat("_DissolveProgress", 0);
     }
 
     private void OnEndDie()
@@ -204,6 +210,7 @@ public class Player : MonoBehaviour, IRestart
         isDeath = false;
         lifeTime.isFastTime = false;
         lifeTime.shapeController.isFireZero = false;
+        GetComponent<PlayerRespawnTextureCycler>()?.AdvanceTexture();
         RestartSystem.Restart();
     }
     
@@ -438,6 +445,11 @@ public class Player : MonoBehaviour, IRestart
         _speedSlowdown = isSlowdown ? SlowdownMultiplier : DefaultSlowdownMultiplier;
         _disableJump = isSlowdown;
         animator.SetFloat("SpeedInZhiza", isSlowdown ? SlowdownSpeedInZhiza : DefaultSpeedInZhiza);
+    }
+
+    private Material GetDisintegrateMaterial()
+    {
+        return _respawnTextureCycler?.TargetMaterial ?? disintegrate;
     }
 
     private void OnTriggerEnter(Collider other)
