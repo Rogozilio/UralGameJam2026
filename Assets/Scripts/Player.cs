@@ -257,9 +257,7 @@ public class Player : MonoBehaviour, IRestart
     
         bool isGrounded = characterController.isGrounded || (isOnPlatform && _velocityY <= 0f);
         bool jumpPressed = _input.isJump;
-        bool jumpHeld = _input.isJumpHeld;
-
-        if (!jumpHeld)
+        if (!_input.isJumpHeld)
             _blockJumpUntilRelease = false;
 
         if (jumpPressed)
@@ -310,8 +308,6 @@ public class Player : MonoBehaviour, IRestart
         {
             if (_velocityY < 0f)
                 gravityMultiplier = fallGravityMultiplier;
-            else if (!jumpHeld)
-                gravityMultiplier = jumpCutGravityMultiplier;
         }
 
         _velocityY += gravity * gravityMultiplier * Time.deltaTime;
