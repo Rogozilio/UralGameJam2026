@@ -16,7 +16,7 @@ Material:
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
+  m_CustomRenderQueue: 3100
   stringTagMap: {}
   disabledShaderPasses: []
   m_LockedProperties: 
@@ -29,16 +29,16 @@ Material:
     - _BandSoftness: 4.49
     - _BandSpeed: 1.88
     - _BandStrength: 0.312
-    - _CoreTightness: 1.23
+    - _CoreTightness: 2.87
     - _DustBrightness: 2.2
     - _DustDensity: 1
     - _DustSize: 0.14
     - _DustSpeed: 0.9
-    - _Intensity: 8
+    - _Intensity: 2.93
     - _LengthFade: 4.59
     - _NoiseScale: 3.4
     - _NoiseStrength: 1
-    - _Opacity: 1
+    - _Opacity: 0.333
     - _ReverseV: 0
     - _StartBoost: 3.37
     m_Colors:
