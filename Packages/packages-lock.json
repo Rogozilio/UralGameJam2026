@@ -62,7 +62,7 @@
       "dependencies": {}
     },
     "com.unity.ide.rider": {
-      "version": "3.0.39",
+      "version": "3.0.40",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -256,6 +256,13 @@
         "com.unity.modules.jsonserialize": "1.0.0"
       },
       "url": "https://packages.unity.com"
+    },
+    "ru.leopotam.ecsproto": {
+      "version": "https://gitverse.ru/leopotam/ecsproto.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "f4ce0e9300446547ce8e213318909fcecddc867b"
     },
     "com.unity.modules.accessibility": {
       "version": "1.0.0",
