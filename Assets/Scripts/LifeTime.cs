@@ -1,7 +1,8 @@
-using System;
-using System.Collections;
+using Unity.Entities;
 using TMPro;
 using UnityEngine;
+using UralGameJam.Ecs.BlendShape;
+using UralGameJam.Ecs.LifeTime;
 
 namespace Scripts
 {
@@ -9,83 +10,47 @@ namespace Scripts
     {
         public float time;
         public TextMeshProUGUI text;
-        public BlendShapeController shapeController;
 
-        public event Action OnLifeTimeEnded;
-
-        public bool isFastTime;
-
-        private Coroutine _lifeCoroutine;
-        private float _remainingTime;
-        private bool _isPaused;
+        private Entity _entity;
+        private EntityManager _entityManager;
 
         private void Awake()
         {
-            isFastTime = false;
-            _isPaused = false;
-        }
+            _entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
+            var generalEntity = GetComponent<GeneralEntity>();
 
-        public void StartLifeTimer()
-        {
-            StopLifeTimer();
-            isFastTime = false;
-            shapeController.fire.Stop();
-            shapeController.fire.Clear();
-            shapeController.fire.Play();
-            _remainingTime = time;
-            _lifeCoroutine = StartCoroutine(LifeTimerCoroutine());
-        }
+            if (generalEntity == null)
+                generalEntity = gameObject.AddComponent<GeneralEntity>();
 
-        public void StopLifeTimer()
-        {
-            if (_lifeCoroutine != null)
-            {
-                StopCoroutine(_lifeCoroutine);
-                _lifeCoroutine = null;
-            }
+            _entity = generalEntity.GetOrCreate();
             
-            _isPaused = false;
-        }
-
-        public void RestartLifeTimer()
-        {
-            StopLifeTimer();
-            StartLifeTimer();
-        }
-
-        public void PauseLifeTimer()
-        {
-            if (_lifeCoroutine != null)
-                _isPaused = true;
-        }
-
-        public void ResumeLifeTimer()
-        {
-            if (_lifeCoroutine != null)
-                _isPaused = false;
-        }
-
-        private IEnumerator LifeTimerCoroutine()
-        {
-            while (_remainingTime > 0f)
+            _entityManager.AddComponentObject(_entity, new LifeTimeViewComponent
             {
-                text.text = _remainingTime.ToString("00");
+                Text = text
+            });
+            
+            _entityManager.AddComponentData(_entity, new LifeTimeComponent
+            {
+                Duration = time,
+                RemainingTime = time,
+                IsFastTime = false
+            });
+            _entityManager.SetComponentEnabled<LifeTimeComponent>(_entity, true);
 
-                shapeController.blendValue = 1f - _remainingTime / time;
+            if (!_entityManager.HasComponent<RestartFireRequestTag>(_entity))
+                _entityManager.AddComponent<RestartFireRequestTag>(_entity);
+        }
 
-                if (!_isPaused)
-                {
-                    var multiply = isFastTime ? 40f : 1f;
-                    _remainingTime -= Time.deltaTime * multiply;
-                }
-                    
-                
-                yield return null;
+        private void OnDestroy()
+        {
+            if (_entityManager.Exists(_entity))
+            {
+                if (_entityManager.HasComponent<LifeTimeViewComponent>(_entity))
+                    _entityManager.RemoveComponent<LifeTimeViewComponent>(_entity);
+
+                if (_entityManager.HasComponent<LifeTimeComponent>(_entity))
+                    _entityManager.RemoveComponent<LifeTimeComponent>(_entity);
             }
-
-            text.text = "0";
-            _lifeCoroutine = null;
-            OnLifeTimeEnded?.Invoke();
         }
     }
 }
