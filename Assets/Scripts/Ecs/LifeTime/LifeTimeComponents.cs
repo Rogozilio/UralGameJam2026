@@ -15,7 +15,7 @@ namespace UralGameJam.Ecs.LifeTime
         public bool IsFastTime;
     }
 
-    public struct LifeTimePausedTag : IComponentData
+    public struct LifeTimePausedTag : IComponentData, IEnableableComponent
     {
     }
 
