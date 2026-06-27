@@ -6,23 +6,14 @@ using UralGameJam.Ecs.LifeTime;
 
 namespace Scripts
 {
-    public class LifeTime : MonoBehaviour
+    public class LifeTime : MonoEntity
     {
         public float time;
         public TextMeshProUGUI text;
 
-        private Entity _entity;
-        private EntityManager _entityManager;
-
-        private void Awake()
+        protected override void Awake()
         {
-            _entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
-            var generalEntity = GetComponent<GeneralEntity>();
-
-            if (generalEntity == null)
-                generalEntity = gameObject.AddComponent<GeneralEntity>();
-
-            _entity = generalEntity.GetOrCreate();
+            base.Awake();
             
             _entityManager.AddComponentObject(_entity, new LifeTimeViewComponent
             {

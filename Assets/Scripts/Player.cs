@@ -1,45 +1,39 @@
-using System;
-using System.Collections;
 using Scripts;
 using Unity.Cinemachine;
-using Unity.VisualScripting;
+using Unity.Entities;
 using UnityEngine;
 using UnityEngine.Events;
-using Zenject;
-using Input = Scripts.Input;
+using UnityEngine.Serialization;
+using UralGameJam.Ecs.Game;
+using UralGameJam.Ecs.BlendShape;
+using UralGameJam.Ecs.LifeTime;
+using UralGameJam.Ecs.Physics3D;
+using UralGameJam.Ecs.Player;
+using UralGameJam.Ecs.Restart;
 
-public class Player : MonoBehaviour, IRestart
+public class Player : MonoEntity, IRestart
 {
-    private const float DefaultSlowdownMultiplier = 1f;
-    private const float SlowdownMultiplier = 0.4f;
-    private const float DefaultSpeedInZhiza = 1f;
-    private const float SlowdownSpeedInZhiza = 0.6f;
+    public const float DefaultSlowdownMultiplier = 1f;
+    public const float SlowdownMultiplier = 0.4f;
+    public const float DefaultSpeedInZhiza = 1f;
+    public const float SlowdownSpeedInZhiza = 0.6f;
 
-    [Inject] private Input _input;
-    [Inject] private UIMenu _uiMenu;
-    
+    //[Inject] private UIMenu _uiMenu;
+
     [Header("References")]
-    public LifeTime lifeTime;
     public Animator animator;
     public Transform render;
-    public AshSpawner ashSpawner;
     public FootstepAudio footstepAudio;
     public AudioClip deathSound;
     [Range(0f, 1f)] public float deathSoundVolume = 1f;
-    public Transform respawn1;
-    public Transform respawn2;
-    public bool isTutorial;
     public bool isActive = true;
 
     public bool IsTutorial
     {
         set
         {
-            isTutorial = value;
             animator.SetBool("isTutorial", value);
             isIdleFire = !value;
-            if (!isTutorial)
-                lifeTime.StartLifeTimer();
         }
     }
 
@@ -84,7 +78,7 @@ public class Player : MonoBehaviour, IRestart
             nextCamera.Priority = value ? 1 : -1;
         }
     }
-    
+
     [Header("Coyote Time")]
     public float coyoteTime = 0.15f;
     private float _coyoteTimeCounter;
@@ -93,10 +87,10 @@ public class Player : MonoBehaviour, IRestart
     [HideInInspector] public bool isOnPlatform;
     private float _pitch;
     private float _yaw;
-    private float _speedSlowdown = 1f;
-    private bool _disableJump;
     private bool _blockJumpUntilRelease;
     private PlayerRespawnTextureCycler _respawnTextureCycler;
+    private EntityManager _entityManager;
+    private bool _playerEcsInitialized;
 
     [SerializeField]
     private bool isIdleFire;
@@ -106,18 +100,35 @@ public class Player : MonoBehaviour, IRestart
     [Header("Death")]
     public UnityEvent onStartDeath;
     public UnityEvent onEndDeath;
-    public bool isDeath;
-    public Material disintegrate;
-    
-    public bool isMove => _input.playerMove.magnitude > 0;
+    [Min(0f)] public float deathDuration = 2f;
+    [FormerlySerializedAs("isDeath")]
+    [SerializeField]
+    private bool _isDeath;
 
-    public bool isSwim
+    public bool isDeath
     {
+        get
+        {
+            if (!_playerEcsInitialized)
+                return _isDeath;
+
+            return _entityManager.GetComponentData<PlayerDeathData>(_entity).IsDeath;
+        }
         set
         {
-            animator.SetBool("isSwim", value);
+            _isDeath = value;
+
+            if (!_playerEcsInitialized)
+                return;
+
+            var death = _entityManager.GetComponentData<PlayerDeathData>(_entity);
+            death.IsDeath = value;
+            _entityManager.SetComponentData(_entity, death);
         }
     }
+    public Material disintegrate;
+
+    public bool isMove => ReadInput().Move.magnitude > 0f;
 
     public bool SetIsPushAnim
     {
@@ -125,8 +136,154 @@ public class Player : MonoBehaviour, IRestart
         get => animator.GetBool("isPush");
     }
 
-    void Awake()
+    public bool IsAnimationPlaying
     {
+        get => _isAnimation;
+        set => _isAnimation = value;
+    }
+
+    public ClimbData CurrentClimbData { get; set; }
+
+    private void InitializePlayerEcs()
+    {
+        if (_playerEcsInitialized && _entityManager.Exists(_entity))
+            return;
+
+        if (!_entityManager.HasComponent<PlayerTag>(_entity))
+            _entityManager.AddComponent<PlayerTag>(_entity);
+
+        if (!_entityManager.HasComponent<PlayerViewData>(_entity))
+        {
+            _entityManager.AddComponentObject(_entity, new PlayerViewData
+            {
+                Owner = gameObject,
+                View = this,
+                CharacterController = characterController,
+                Animator = animator,
+                Render = render,
+                TempPointMove = tempPointMove,
+                CameraTarget = cameraTarget
+            });
+        }
+
+        if (!_entityManager.HasComponent<PlayerMovementData>(_entity))
+            _entityManager.AddComponentData(_entity, CreateMovementData());
+
+        if (!_entityManager.HasComponent<PlayerDeathData>(_entity))
+            _entityManager.AddComponentData(_entity, new PlayerDeathData { IsDeath = _isDeath });
+
+        if (!_entityManager.HasComponent<PlayerCameraData>(_entity))
+            _entityManager.AddComponentData(_entity, CreateCameraData());
+
+        if (!_entityManager.HasComponent<PlayerTriggerStateData>(_entity))
+            _entityManager.AddComponentData(_entity, new PlayerTriggerStateData());
+
+        _playerEcsInitialized = true;
+    }
+
+    private PlayerMovementData CreateMovementData()
+    {
+        return new PlayerMovementData
+        {
+            MoveSpeed = moveSpeed,
+            JumpHeight = jumpHeight,
+            Gravity = gravity,
+            JumpBufferTime = jumpBufferTime,
+            FallGravityMultiplier = fallGravityMultiplier,
+            CoyoteTime = coyoteTime,
+            VelocityY = _velocityY,
+            CoyoteTimeCounter = _coyoteTimeCounter,
+            JumpBufferCounter = _jumpBufferCounter,
+            SpeedSlowdown = DefaultSlowdownMultiplier,
+            DisableJump = false,
+            BlockJumpUntilRelease = _blockJumpUntilRelease
+        };
+    }
+
+    private PlayerCameraData CreateCameraData()
+    {
+        return new PlayerCameraData
+        {
+            Yaw = _yaw,
+            Pitch = _pitch,
+            MouseSensitivity = mouseSensitivity,
+            GamepadSensitivity = gamepadSensitivity,
+            PitchMin = pitchMin,
+            PitchMax = pitchMax
+        };
+    }
+
+    private void DestroyPlayerEcs()
+    {
+        if (_playerEcsInitialized && _entityManager.Exists(_entity))
+        {
+            if (_entityManager.HasComponent<PlayerTag>(_entity))
+                _entityManager.RemoveComponent<PlayerTag>(_entity);
+
+            if (_entityManager.HasComponent<PlayerDeathTag>(_entity))
+                _entityManager.RemoveComponent<PlayerDeathTag>(_entity);
+
+            if (_entityManager.HasComponent<PlayerClimbStartTag>(_entity))
+                _entityManager.RemoveComponent<PlayerClimbStartTag>(_entity);
+
+            if (_entityManager.HasComponent<PlayerSlowdownEnterTag>(_entity))
+                _entityManager.RemoveComponent<PlayerSlowdownEnterTag>(_entity);
+
+            if (_entityManager.HasComponent<PlayerSlowdownExitTag>(_entity))
+                _entityManager.RemoveComponent<PlayerSlowdownExitTag>(_entity);
+
+            if (_entityManager.HasComponent<PlayerViewData>(_entity))
+                _entityManager.RemoveComponent<PlayerViewData>(_entity);
+
+            if (_entityManager.HasComponent<PlayerMovementData>(_entity))
+                _entityManager.RemoveComponent<PlayerMovementData>(_entity);
+
+            if (_entityManager.HasComponent<PlayerDeathData>(_entity))
+                _entityManager.RemoveComponent<PlayerDeathData>(_entity);
+
+            if (_entityManager.HasComponent<PlayerCameraData>(_entity))
+                _entityManager.RemoveComponent<PlayerCameraData>(_entity);
+
+            if (_entityManager.HasComponent<PlayerTriggerStateData>(_entity))
+                _entityManager.RemoveComponent<PlayerTriggerStateData>(_entity);
+        }
+
+        _entity = Entity.Null;
+        _playerEcsInitialized = false;
+    }
+
+    private void ResetPlayerEcsMovementState(bool blockJumpUntilRelease = false)
+    {
+        _velocityY = 0f;
+        _coyoteTimeCounter = 0f;
+        _jumpBufferCounter = 0f;
+        _blockJumpUntilRelease = blockJumpUntilRelease;
+
+        if (!_playerEcsInitialized)
+            return;
+
+        var movement = _entityManager.GetComponentData<PlayerMovementData>(_entity);
+        movement.VelocityY = 0f;
+        movement.CoyoteTimeCounter = 0f;
+        movement.JumpBufferCounter = 0f;
+        movement.BlockJumpUntilRelease = blockJumpUntilRelease;
+        _entityManager.SetComponentData(_entity, movement);
+    }
+
+    private void SetPlayerJustResumed()
+    {
+        if (!_playerEcsInitialized)
+            return;
+
+        var movement = _entityManager.GetComponentData<PlayerMovementData>(_entity);
+        movement.JustResumed = true;
+        _entityManager.SetComponentData(_entity, movement);
+    }
+
+    protected override void Awake()
+    {
+        base.Awake();
+
         _yaw = cameraTarget.eulerAngles.y;
         float rawPitch = cameraTarget.eulerAngles.x;
         _pitch = rawPitch > 180f ? rawPitch - 360f : rawPitch;
@@ -135,192 +292,56 @@ public class Player : MonoBehaviour, IRestart
         // Cursor.visible = false;
 
         animator.applyRootMotion = false;
-        SetSlowdownState(false);
+        ResetOriginPositionAndRotation();
         _respawnTextureCycler = GetComponent<PlayerRespawnTextureCycler>();
+        InitializePlayerEcs();
+        EnsureTriggerBridge();
+        SetSlowdownState(false);
 
         if (footstepAudio == null)
             footstepAudio = GetComponentInChildren<FootstepAudio>();
         
-        ResetOriginPositionAndRotation();
-        lifeTime.OnLifeTimeEnded += RestartNow;
-        if (!isTutorial)
-            lifeTime.StartLifeTimer();
+        //_uiMenu.OnResumed += HandleResumed;
         
-        _uiMenu.OnResumed += HandleResumed;
-        
-        onStartDeath.AddListener(OnStartDie);
-        onEndDeath.AddListener(OnEndDie);
-        
-        transform.position = isTutorial ? respawn1.position : respawn2.position;
-        transform.rotation = isTutorial ? respawn1.rotation : respawn2.rotation;
     }
     
     private void OnDestroy()
     {
-        lifeTime.OnLifeTimeEnded -= RestartNow;
-        _uiMenu.OnResumed -= HandleResumed;
-        
-        onStartDeath.RemoveListener(OnStartDie);
-        onEndDeath.RemoveListener(OnEndDie);
+        //_uiMenu.OnResumed -= HandleResumed;
+
+        DestroyPlayerEcs();
     }
 
-    private void OnStartDie()
+    public void BeginDeathSequence()
     {
         footstepAudio?.ResetSurfaceTypeToDefault();
         if (deathSound != null)
             AudioSource.PlayClipAtPoint(deathSound, transform.position, deathSoundVolume);
 
-        lifeTime.isFastTime = true;
         animator.CrossFade("Die", 0.3f);
-        ashSpawner.Spawn();
-        StartCoroutine(LaunchDisintegrate());
-    }
-    
-    private IEnumerator LaunchDisintegrate()
-    {
-        var dissolveMaterial = GetDisintegrateMaterial();
-        if (dissolveMaterial == null)
-            yield break;
-
-        lifeTime.shapeController.fire.Stop();
-        lifeTime.shapeController.fire.Clear();
-        while (lifeTime.shapeController.blendValue < 0.98f)
-        {
-            yield return new WaitForFixedUpdate();
-        }
-        
-        dissolveMaterial.SetFloat("_DissolveProgress", 0);
-        lifeTime.shapeController.isFireZero = true;
-        
-        var step = 0.01f;
-        var dissolveProgress = dissolveMaterial.GetFloat("_DissolveProgress");
-
-        while (dissolveProgress < 1)
-        {
-            dissolveProgress += step;
-            dissolveMaterial.SetFloat("_DissolveProgress", dissolveProgress);
-            yield return new WaitForFixedUpdate();
-        }
-        
-        dissolveMaterial.SetFloat("_DissolveProgress", 0);
+        onStartDeath?.Invoke();
     }
 
-    private void OnEndDie()
+    public void CompleteDeathSequence()
     {
         isDeath = false;
-        lifeTime.isFastTime = false;
-        lifeTime.shapeController.isFireZero = false;
         GetComponent<PlayerRespawnTextureCycler>()?.AdvanceTexture();
-        RestartSystem.Restart();
+        onEndDeath?.Invoke();
     }
     
-    private void HandleResumed() => _justResumed = true;
+    private void HandleResumed() => SetPlayerJustResumed();
 
     private void Update()
     {
+        SyncPlayerViewData();
+
         if (Time.timeScale == 0f || !isActive)
         { 
             animator.SetInteger("move", 0);
             return;
         }
-        
-        MoveCamera();
-        if (isDeath && characterController.isGrounded)
-        {
-            if (!lifeTime.isFastTime)
-                Death();
-            return;
-        }
 
-        PlayerController();
         animator.SetBool("isIdleFire", isIdleFire);
-    }
-
-    private void MoveCamera()
-    {
-        Vector2 look = _input.playerLook;
-
-        float sensitivity;
-        
-        if (!_input.isGamepad)
-            sensitivity = mouseSensitivity * _input.mouseSensitivityMultiplay * Time.deltaTime;
-        else
-            sensitivity = gamepadSensitivity * _input.stickSensitivityMultiplay * Time.deltaTime;
-
-        _yaw += look.x * sensitivity;
-        _pitch -= look.y * sensitivity;
-        _pitch = Mathf.Clamp(_pitch, pitchMin, pitchMax);
-
-        cameraTarget.localRotation = Quaternion.Euler(_pitch, _yaw, 0f);
-    }
-    
-    void PlayerController()
-    {
-        if (!characterController.enabled) return;
-        if (_isAnimation) return;
-    
-        bool isGrounded = characterController.isGrounded || (isOnPlatform && _velocityY <= 0f);
-        bool jumpPressed = _input.isJump;
-        if (!_input.isJumpHeld)
-            _blockJumpUntilRelease = false;
-
-        if (jumpPressed)
-            _jumpBufferCounter = jumpBufferTime;
-        else
-            _jumpBufferCounter = Mathf.Max(0f, _jumpBufferCounter - Time.deltaTime);
-
-        if (_justResumed && !isGrounded)
-        {
-            isGrounded = true;
-            _justResumed = false;
-        }
-
-        if (isGrounded)
-            _coyoteTimeCounter = coyoteTime;
-        else
-            _coyoteTimeCounter -= Time.deltaTime;
-
-        if (isGrounded && _velocityY < 0f)
-            _velocityY = -2f;
-
-        Vector2 move = _input.playerMove;
-        Quaternion camYaw = isStaticCamera
-            ? Quaternion.Euler(0f, staticCameraTransform.eulerAngles.y, 0f)
-            : Quaternion.Euler(0f, _yaw, 0f);
-        Vector3 dir = camYaw * new Vector3(move.x, 0f, move.y);
-        var speed = moveSpeed * _speedSlowdown;
-        characterController.Move(dir * speed * Time.deltaTime);
-    
-        if (dir.sqrMagnitude > 0.01f)
-        {
-            Quaternion targetRotation = Quaternion.LookRotation(dir) * Quaternion.Euler(270f, 90f, 0f);
-            render.rotation = Quaternion.Slerp(render.rotation, targetRotation, 15f * Time.deltaTime);
-            tempPointMove.rotation = Quaternion.Slerp(tempPointMove.rotation, targetRotation, 15f * Time.deltaTime);
-        }
-
-        if (_jumpBufferCounter > 0f && _coyoteTimeCounter > 0f && !_disableJump && !_blockJumpUntilRelease)
-        {
-            _velocityY = Mathf.Sqrt(jumpHeight * -2f * gravity);
-            _coyoteTimeCounter = 0f;
-            _jumpBufferCounter = 0f;
-            isGrounded = false;
-        }
-
-        float gravityMultiplier = 1f;
-
-        if (!isGrounded)
-        {
-            if (_velocityY < 0f)
-                gravityMultiplier = fallGravityMultiplier;
-        }
-
-        _velocityY += gravity * gravityMultiplier * Time.deltaTime;
-        characterController.Move(new Vector3(0f, _velocityY, 0f) * Time.deltaTime);
-
-        tempPointMove.position = transform.position;
-    
-        animator.SetBool("isJump", !isGrounded);
-        animator.SetInteger("move", move.magnitude > 0 ? 1 : 0);
     }
 
     #region Restart
@@ -338,46 +359,65 @@ public class Player : MonoBehaviour, IRestart
 
     public void Death(bool isDeathNow = false)
     {
-        if (!isDeath && !isDeathNow) return;
-        
-        StartCoroutine(WaitEndDeath(2));
-    }
-    
-    private IEnumerator WaitEndDeath(float time)
-    {
-        onStartDeath?.Invoke();
-        
-        yield return new WaitForSeconds(time);
+        if ((!isDeath && !isDeathNow) ||
+            !_playerEcsInitialized ||
+            _entityManager.HasComponent<PlayerDeathTag>(_entity))
+            return;
 
-        onEndDeath?.Invoke();
+        isDeath = true;
+        _entityManager.AddComponent<PlayerDeathTag>(_entity);
     }
 
     public void RestartNow()
     {
         isDeath = true;
     }
-    
+
     public void Restart()
     {
-        characterController.enabled = false;
-    
-        transform.position = isTutorial ? respawn1.position : respawn2.position;
-        transform.rotation = isTutorial ? respawn1.rotation : respawn2.rotation;
-        render.localRotation = _originRenderRotation;
-        _velocityY = 0f;
+        if (!_playerEcsInitialized || characterController == null)
+            return;
 
-        if (!isTutorial)
+        characterController.enabled = false;
+        transform.SetPositionAndRotation(_originPosition, _originRotation);
+
+        if (render != null)
+            render.localRotation = _originRenderRotation;
+
+        ResetPlayerEcsMovementState();
+        var movement = _entityManager.GetComponentData<PlayerMovementData>(_entity);
+        movement.SpeedSlowdown = DefaultSlowdownMultiplier;
+        movement.DisableJump = false;
+        movement.JustResumed = false;
+        movement.IsOnPlatform = false;
+        _entityManager.SetComponentData(_entity, movement);
+
+        if (cameraTarget != null)
         {
-            lifeTime.RestartLifeTimer();
+            var camera = _entityManager.GetComponentData<PlayerCameraData>(_entity);
+            camera.Yaw = cameraTarget.eulerAngles.y;
+            var rawPitch = cameraTarget.eulerAngles.x;
+            camera.Pitch = rawPitch > 180f ? rawPitch - 360f : rawPitch;
+            _entityManager.SetComponentData(_entity, camera);
         }
 
-        SetSlowdownState(false);
-        _coyoteTimeCounter = 0f;
-        _jumpBufferCounter = 0f;
-        IsStaticCamera = false;
+        var triggerState = _entityManager.GetComponentData<PlayerTriggerStateData>(_entity);
+        triggerState.ClimbEntity = Entity.Null;
+        triggerState.SlowdownContacts = 0;
+        _entityManager.SetComponentData(_entity, triggerState);
 
-        if (isTutorial)
-            FinishRespawn();
+        RestartLifeTime();
+        isStaticCamera = false;
+
+        if (nextCamera != null)
+            nextCamera.Priority = -1;
+
+        if (animator != null)
+        {
+            animator.SetFloat("SpeedInZhiza", DefaultSpeedInZhiza);
+            animator.SetBool("isJump", false);
+            animator.SetInteger("move", 0);
+        }
     }
 
     #endregion
@@ -399,37 +439,21 @@ public class Player : MonoBehaviour, IRestart
         transform.rotation *= Quaternion.Euler(0f, 180f, 0f);
     }
 
-    private void Climb(ClimbData target)
-    {
-        var isLooksAt = Vector3.Dot(-render.right, target.transform.forward) > 0.5f;
-        var isPlayerHigher = render.position.y > target.transform.position.y;
-        
-        if (!isLooksAt || isPlayerHigher) return;
-        
-        _isAnimation = true;
-        _velocityY = 0f;
-        _coyoteTimeCounter = 0f;
-        _jumpBufferCounter = 0f;
-        _blockJumpUntilRelease = _input.isJumpHeld;
-        
-        lifeTime.PauseLifeTimer();
-        characterController.enabled = false;
-        animator.CrossFade("Climb", 0.1f, 0);
-        transform.position = target.GetPointStartClimb(transform);
-        render.rotation = target.startClimb.rotation * Quaternion.Euler(270, 90f, 0f);
-    }
-
     public void FinishClimb()
     {
-        _isAnimation = false;
-        _disableJump = false;
-        transform.position = _climbData.GetPointFinishClimb(transform);
+        var climbData = CurrentClimbData;
+        CurrentClimbData = null;
+
+        if (climbData == null)
+            return;
+
+        IsAnimationPlaying = false;
+        transform.position = climbData.GetPointFinishClimb(transform);
         characterController.enabled = true;
-        _velocityY = 0f;
-        _coyoteTimeCounter = 0f;
-        _jumpBufferCounter = 0f;
-        _blockJumpUntilRelease = _input.isJumpHeld;
-        lifeTime.ResumeLifeTimer();
+        ResetPlayerEcsMovementState(ReadInput().JumpHeld);
+        var movement = _entityManager.GetComponentData<PlayerMovementData>(_entity);
+        movement.ResumeLifeTimeRequested = true;
+        _entityManager.SetComponentData(_entity, movement);
         animator.SetTrigger("isClimb");
     }
 
@@ -437,48 +461,84 @@ public class Player : MonoBehaviour, IRestart
 
     #region Collisions&Triggers
 
-    private ClimbData _climbData;
-    private bool _justResumed;
-
-    private void SetSlowdownState(bool isSlowdown)
+    public void SetSlowdownState(bool isSlowdown)
     {
-        _speedSlowdown = isSlowdown ? SlowdownMultiplier : DefaultSlowdownMultiplier;
-        _disableJump = isSlowdown;
         animator.SetFloat("SpeedInZhiza", isSlowdown ? SlowdownSpeedInZhiza : DefaultSpeedInZhiza);
+
+        if (!_playerEcsInitialized)
+            return;
+
+        var movement = _entityManager.GetComponentData<PlayerMovementData>(_entity);
+        movement.SpeedSlowdown = isSlowdown ? SlowdownMultiplier : DefaultSlowdownMultiplier;
+        movement.DisableJump = isSlowdown;
+        _entityManager.SetComponentData(_entity, movement);
     }
 
-    private Material GetDisintegrateMaterial()
+    private Vector3 GetRespawnPosition() => _originPosition;
+
+    private Quaternion GetRespawnRotation() => _originRotation;
+
+    private void SyncPlayerViewData()
+    {
+        var view = _entityManager.GetComponentObject<PlayerViewData>(_entity);
+        view.Owner = gameObject;
+        view.CharacterController = characterController;
+        view.Animator = animator;
+        view.Render = render;
+        view.TempPointMove = tempPointMove;
+        view.CameraTarget = cameraTarget;
+    }
+
+    private void RestartLifeTime()
+    {
+        if (_entityManager.HasComponent<LifeTimeComponent>(_entity))
+        {
+            var lifeTime = _entityManager.GetComponentData<LifeTimeComponent>(_entity);
+            lifeTime.RemainingTime = lifeTime.Duration;
+            lifeTime.IsFastTime = false;
+            _entityManager.SetComponentData(_entity, lifeTime);
+            _entityManager.SetComponentEnabled<LifeTimeComponent>(_entity, true);
+
+            if (_entityManager.HasComponent<LifeTimePausedTag>(_entity))
+                _entityManager.RemoveComponent<LifeTimePausedTag>(_entity);
+
+            if (!_entityManager.HasComponent<RestartFireRequestTag>(_entity))
+                _entityManager.AddComponent<RestartFireRequestTag>(_entity);
+        }
+
+        if (_entityManager.HasComponent<BlendShapeData>(_entity))
+        {
+            var blendShape = _entityManager.GetComponentData<BlendShapeData>(_entity);
+            blendShape.IsFireZero = false;
+            _entityManager.SetComponentData(_entity, blendShape);
+        }
+    }
+
+    public Material GetDisintegrateMaterial()
     {
         return _respawnTextureCycler?.TargetMaterial ?? disintegrate;
     }
 
-    private void OnTriggerEnter(Collider other)
+    private InputComponent ReadInput()
     {
-        if (other.CompareTag("Climb"))
-        {
-            Climb(other.GetComponent<ClimbData>());
-            _climbData = other.GetComponent<ClimbData>();
-        }
-        else if (other.CompareTag("Slowdown"))
-        {
-            SetSlowdownState(true);
-        }
+        using var query = _entityManager.CreateEntityQuery(ComponentType.ReadOnly<InputComponent>());
+        return query.TryGetSingletonEntity<InputComponent>(out var entity)
+            ? _entityManager.GetComponentData<InputComponent>(entity)
+            : new InputComponent
+            {
+                MouseSensitivityMultiplier = 1f,
+                StickSensitivityMultiplier = 1f
+            };
     }
 
-    private void OnTriggerStay(Collider other)
+    private void EnsureTriggerBridge()
     {
-        if (other.CompareTag("Slowdown"))
-        {
-            SetSlowdownState(true);
-        }
-    }
+        var provider = GetComponent<ColliderAndTriggerDOTSProvider>();
 
-    private void OnTriggerExit(Collider other)
-    {
-        if (other.CompareTag("Slowdown"))
-        {
-            SetSlowdownState(false);
-        }
+        if (provider == null)
+            provider = gameObject.AddComponent<ColliderAndTriggerDOTSProvider>();
+
+        provider.entityA = _entity;
     }
 
     #endregion
