@@ -1,7 +1,10 @@
-using UralGameJam.Ecs.Physics3D;
+using Unity.Entities;
 
 namespace Scripts
 {
+    public struct KillBoxTag : IComponentData
+    {
+    }
     public sealed class KillBox : PhysicsMonoEntity
     {
         protected override void Awake()
