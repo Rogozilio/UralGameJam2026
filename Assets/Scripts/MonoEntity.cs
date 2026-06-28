@@ -16,5 +16,19 @@ namespace Scripts
             
             _entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
         }
+
+        protected void RemoveComponent<T>() where T : IComponentData
+        {
+            if (_entityManager.HasComponent<T>(_entity))
+                _entityManager.RemoveComponent<T>(_entity);
+        }
+
+        protected void SendAnimationRequest<T>()
+            where T : unmanaged, IComponentData, IEnableableComponent
+        {
+            if (_entityManager.HasComponent<T>(_entity))
+                _entityManager.SetComponentEnabled<T>(_entity, true);
+        }
+
     }
 }
