@@ -8,18 +8,15 @@ namespace UralGameJam.Ecs.Game
         protected override void OnUpdate()
         {
             var sourceEntity = SystemAPI.GetSingletonEntity<InputComponent>();
-            var source = EntityManager.GetComponentObject<InputSource>(sourceEntity).View;
-
-            if (source == null)
-                return;
+            var source = EntityManager.GetComponentObject<InputSource>(sourceEntity).view;
 
             var input = EntityManager.GetComponentData<InputComponent>(sourceEntity);
-            input.Move = source.playerMove;
-            input.Look = source.playerLook;
-            input.JumpPressed = source.isJump;
-            input.JumpHeld = source.isJumpHeld;
-            input.IsGamepad = source.isGamepad;
-            input.EscapePressed = source.isEscape;
+            input.move = source.playerMove;
+            input.look = source.playerLook;
+            input.jumpPressed = source.isJump;
+            input.jumpHeld = source.isJumpHeld;
+            input.isGamepad = source.isGamepad;
+            input.escapePressed = source.isEscape;
             EntityManager.SetComponentData(sourceEntity, input);
         }
     }

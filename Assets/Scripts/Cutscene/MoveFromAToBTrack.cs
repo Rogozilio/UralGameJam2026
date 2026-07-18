@@ -21,7 +21,6 @@ namespace Scripts.Cutscene
         public ExposedReference<Transform> rotationTarget;
         public ExposedReference<Animator> animator;
         // Будь осторожен с кастомными классами типа Player в билде
-        public ExposedReference<Player> playerController; 
 
         [Header("Movement")]
         public bool rotateAlongPath = true;
@@ -32,10 +31,6 @@ namespace Scripts.Cutscene
         public string moveParameter = "move";
         public int walkValue = 1;
         public int idleValue = 0;
-
-        [Header("Cutscene Safety")]
-        public bool lockPlayerInput = true;
-        public bool disableCharacterController = true;
 
         public ClipCaps clipCaps => ClipCaps.None;
 
@@ -50,7 +45,6 @@ namespace Scripts.Cutscene
             behaviour.endPoint = endPoint.Resolve(resolver);
             behaviour.rotationTarget = rotationTarget.Resolve(resolver);
             behaviour.animator = animator.Resolve(resolver);
-            behaviour.playerController = playerController.Resolve(resolver);
 
             behaviour.rotateAlongPath = rotateAlongPath;
             behaviour.rotateOnlyY = rotateOnlyY;
@@ -58,8 +52,6 @@ namespace Scripts.Cutscene
             behaviour.moveParameter = moveParameter;
             behaviour.walkValue = walkValue;
             behaviour.idleValue = idleValue;
-            behaviour.lockPlayerInput = lockPlayerInput;
-            behaviour.disableCharacterController = disableCharacterController;
 
             return playable;
         }
@@ -71,7 +63,6 @@ namespace Scripts.Cutscene
         public Transform endPoint;
         public Transform rotationTarget;
         public Animator animator;
-        public Player playerController;
 
         public bool rotateAlongPath;
         public bool rotateOnlyY;
@@ -79,13 +70,8 @@ namespace Scripts.Cutscene
         public string moveParameter;
         public int walkValue;
         public int idleValue;
-        public bool lockPlayerInput;
-        public bool disableCharacterController;
 
         private bool _isPlaying;
-        private bool _initialPlayerActive;
-        private CharacterController _characterController;
-        private bool _initialCharacterControllerEnabled;
 
         public override void OnBehaviourPlay(Playable playable, FrameData info)
         {
@@ -103,22 +89,6 @@ namespace Scripts.Cutscene
                 return;
 
             // Кэшируем компоненты один раз при старте воспроизведения
-            if (_characterController == null && disableCharacterController)
-            {
-                _characterController = actor.GetComponent<CharacterController>();
-                if (_characterController != null)
-                {
-                    _initialCharacterControllerEnabled = _characterController.enabled;
-                    _characterController.enabled = false;
-                }
-            }
-
-            if (lockPlayerInput && playerController != null && playerController.IsActive)
-            {
-                _initialPlayerActive = true;
-                playerController.IsActive = false;
-            }
-
             float duration = (float)playable.GetDuration();
             float time = (float)playable.GetTime();
             float t = Mathf.Clamp01(time / duration);
@@ -141,11 +111,6 @@ namespace Scripts.Cutscene
             SetWalkAnimation(false);
 
             // Возвращаем состояния
-            if (playerController != null)
-                playerController.IsActive = _initialPlayerActive;
-
-            if (_characterController != null)
-                _characterController.enabled = _initialCharacterControllerEnabled;
         }
 
         private void RotateToDirection(Transform actor, Vector3 start, Vector3 end)

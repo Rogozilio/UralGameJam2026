@@ -19,15 +19,34 @@ namespace Scripts
 
         protected void RemoveComponent<T>() where T : IComponentData
         {
-            if (_entityManager.HasComponent<T>(_entity))
-                _entityManager.RemoveComponent<T>(_entity);
+            _entityManager.RemoveComponent<T>(_entity);
         }
 
-        protected void SendAnimationRequest<T>()
+        protected void AddDisabledComponent<T>()
+            where T : unmanaged, IComponentData, IEnableableComponent
+        {
+            _entityManager.AddComponent<T>(_entity);
+            _entityManager.SetComponentEnabled<T>(_entity, false);
+        }
+
+        protected void AddDisabledComponent<T>(T component)
+            where T : unmanaged, IComponentData, IEnableableComponent
+        {
+            _entityManager.AddComponentData(_entity, component);
+            _entityManager.SetComponentEnabled<T>(_entity, false);
+        }
+
+        protected void EnableComponent<T>()
             where T : unmanaged, IComponentData, IEnableableComponent
         {
             if (_entityManager.HasComponent<T>(_entity))
                 _entityManager.SetComponentEnabled<T>(_entity, true);
+        }
+
+        protected void AddRequest<T>()
+            where T : unmanaged, IComponentData
+        {
+            _entityManager.AddComponent<T>(_entity);
         }
 
     }

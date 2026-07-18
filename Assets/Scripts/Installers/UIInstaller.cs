@@ -1,5 +1,4 @@
 using Zenject;
-using Input = Scripts.Input;
 
 namespace Installers
 {

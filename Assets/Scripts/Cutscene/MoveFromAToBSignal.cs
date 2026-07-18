@@ -12,7 +12,6 @@ namespace Scripts.Cutscene
         public Transform endPoint;
         public Transform rotationTarget;
         public Animator animator;
-        public Player playerController;
 
         [Header("Movement")]
         public float duration = 1f;
@@ -28,19 +27,12 @@ namespace Scripts.Cutscene
         public int walkValue = 1;
         public int idleValue = 0;
 
-        [Header("Cutscene Safety")]
-        public bool lockPlayerInput = true;
-        public bool disableCharacterController = true;
-
         [Header("Events")]
         public UnityEvent onStarted;
         public UnityEvent onCompleted;
 
         private Coroutine _moveCoroutine;
         private bool _isPlaying;
-        private bool _initialPlayerActive;
-        private CharacterController _characterController;
-        private bool _initialCharacterControllerEnabled;
 
         public void Play()
         {
@@ -87,14 +79,7 @@ namespace Scripts.Cutscene
 
         private IEnumerator MoveRoutine()
         {
-            CacheState();
             _isPlaying = true;
-
-            if (lockPlayerInput && playerController != null)
-                playerController.IsActive = false;
-
-            if (disableCharacterController && _characterController != null)
-                _characterController.enabled = false;
 
             if (snapToStartOnPlay)
                 ApplyPosition(startPoint.position);
@@ -149,12 +134,6 @@ namespace Scripts.Cutscene
             _moveCoroutine = null;
             SetWalkAnimation(false);
 
-            if (lockPlayerInput && playerController != null)
-                playerController.IsActive = _initialPlayerActive;
-
-            if (disableCharacterController && _characterController != null)
-                _characterController.enabled = _initialCharacterControllerEnabled;
-
             if (invokeCompleted)
                 onCompleted?.Invoke();
         }
@@ -164,24 +143,11 @@ namespace Scripts.Cutscene
             if (actor == null)
                 actor = transform;
 
-            if (playerController == null && actor != null)
-                playerController = actor.GetComponent<Player>();
-
             if (animator == null)
             {
-                if (playerController != null && playerController.animator != null)
-                    animator = playerController.animator;
-                else if (actor != null)
+                if (actor != null)
                     animator = actor.GetComponentInChildren<Animator>();
             }
-        }
-
-        private void CacheState()
-        {
-            _initialPlayerActive = playerController != null && playerController.IsActive;
-
-            _characterController = actor != null ? actor.GetComponent<CharacterController>() : null;
-            _initialCharacterControllerEnabled = _characterController != null && _characterController.enabled;
         }
 
         private void ApplyPosition(Vector3 position)
@@ -190,7 +156,6 @@ namespace Scripts.Cutscene
                 return;
 
             actor.position = position;
-            SyncPlayerHelpers();
         }
 
         private void RotateToDirection(Vector3 start, Vector3 end)
@@ -211,11 +176,7 @@ namespace Scripts.Cutscene
 
             Vector3 normalizedDirection = direction.normalized;
             Quaternion lookRotation = Quaternion.LookRotation(normalizedDirection, Vector3.up);
-            Quaternion targetRotation = GetTargetRotation(target, normalizedDirection, lookRotation);
-            target.rotation = targetRotation;
-
-            if (playerController != null && playerController.tempPointMove != null)
-                playerController.tempPointMove.rotation = targetRotation;
+            target.rotation = lookRotation * Quaternion.Euler(rotationOffsetEuler);
         }
 
         private Transform GetRotationTarget()
@@ -223,30 +184,7 @@ namespace Scripts.Cutscene
             if (rotationTarget != null)
                 return rotationTarget;
 
-            if (playerController != null && playerController.render != null)
-                return playerController.render;
-
             return actor;
-        }
-
-        private Quaternion GetTargetRotation(Transform target, Vector3 direction, Quaternion lookRotation)
-        {
-            if (playerController != null && target == playerController.render)
-            {
-                Vector3 renderForward = Vector3.Cross(direction, Vector3.up);
-                if (renderForward.sqrMagnitude > 0.0001f)
-                    return Quaternion.LookRotation(renderForward.normalized, Vector3.up);
-            }
-
-            return lookRotation * Quaternion.Euler(rotationOffsetEuler);
-        }
-
-        private void SyncPlayerHelpers()
-        {
-            if (playerController == null || playerController.tempPointMove == null || actor == null)
-                return;
-
-            playerController.tempPointMove.position = actor.position;
         }
 
         private void SetWalkAnimation(bool isWalking)

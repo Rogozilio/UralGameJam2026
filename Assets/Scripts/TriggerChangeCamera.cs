@@ -13,7 +13,7 @@ namespace Scripts
             if (other.CompareTag("Player"))
             {
                 onChangeCamera?.Invoke();
-                other.GetComponent<Player>().isStaticCamera = true;
+                other.GetComponent<Player>().IsStaticCamera = true;
             }
         }
     }

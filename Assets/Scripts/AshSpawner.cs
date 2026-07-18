@@ -1,13 +1,12 @@
 using Scripts;
 using UnityEngine;
-using UralGameJam.Ecs.AshSpawner;
+using UralGameJam.Ecs.Player;
 
 public class AshSpawner : MonoEntity
 {
     [Header("Settings")]
     public GameObject prefab;
     public Transform spawnPoint;
-    public Transform parentAfterSpawn;
 
     [Header("Auto Parent")]
     public bool detectParentBelowSpawn = true;
@@ -21,36 +20,32 @@ public class AshSpawner : MonoEntity
 
     protected override void Awake()
     {
+        if (prefab == null)
+            throw new MissingReferenceException($"{nameof(AshSpawner)}.{nameof(prefab)} is not assigned on {name}");
+
         base.Awake();
 
         _entityManager.AddComponentObject(_entity, new AshSpawnerViewComponent
         {
-            Owner = gameObject,
-            Prefab = prefab,
-            SpawnPoint = spawnPoint,
-            ParentAfterSpawn = parentAfterSpawn,
-            IgnoreHierarchyRoot = ignoreHierarchyRoot
+            owner = gameObject,
+            prefab = prefab,
+            spawnPoint = spawnPoint,
+            ignoreHierarchyRoot = ignoreHierarchyRoot
         });
 
         _entityManager.AddComponentData(_entity, new AshSpawnerComponent
         {
-            DetectParentBelowSpawn = detectParentBelowSpawn,
-            MinSurfaceUpDot = minSurfaceUpDot,
-            ParentSearchLayers = parentSearchLayers,
-            RevealOnSpawn = revealOnSpawn,
-            RevealDuration = revealDuration
+            detectParentBelowSpawn = detectParentBelowSpawn,
+            minSurfaceUpDot = minSurfaceUpDot,
+            parentSearchLayers = parentSearchLayers,
+            revealOnSpawn = revealOnSpawn,
+            revealDuration = revealDuration
         });
     }
 
     private void OnDestroy()
     {
-        if (_entityManager.Exists(_entity))
-        {
-            if (_entityManager.HasComponent<AshSpawnerViewComponent>(_entity))
-                _entityManager.RemoveComponent<AshSpawnerViewComponent>(_entity);
-
-            if (_entityManager.HasComponent<AshSpawnerComponent>(_entity))
-                _entityManager.RemoveComponent<AshSpawnerComponent>(_entity);
-        }
+        RemoveComponent<AshSpawnerComponent>();
+        RemoveComponent<AshSpawnerViewComponent>();
     }
 }

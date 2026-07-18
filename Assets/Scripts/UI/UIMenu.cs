@@ -1,16 +1,14 @@
 using System;
+using UralGameJam.Ecs.Game;
+using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.Events;
 using UnityEngine.UI;
-using Zenject;
-using Input = Scripts.Input;
 
 public class UIMenu : MonoBehaviour
 {
-    [Inject] private Input _input;
-    
     public AudioMixer audioMixer;
     public GameObject mainPanel;
 
@@ -33,6 +31,8 @@ public class UIMenu : MonoBehaviour
     public event Action OnResumed;
 
     private bool _isMainMenu;
+    private EntityManager _entityManager;
+    private EntityQuery _inputQuery;
 
     public bool isMainMenu
     {
@@ -46,6 +46,9 @@ public class UIMenu : MonoBehaviour
 
     private void Awake()
     {
+        _entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
+        _inputQuery = _entityManager.CreateEntityQuery(ComponentType.ReadWrite<InputComponent>());
+
         ChangeVolume();
         
         mainPanel.SetActive(false);
@@ -55,7 +58,6 @@ public class UIMenu : MonoBehaviour
         // Заблокировать курсор в центре экрана (опционально)
         Cursor.lockState = CursorLockMode.Locked;
         
-        _input.OnActionEcs += HideOrShow;
     }
 
     private void OnEnable()
@@ -67,7 +69,8 @@ public class UIMenu : MonoBehaviour
         btnRestart.onClick.AddListener(Hide);
         btnExit.onClick.AddListener(ExitGame);
         
-        mouseSensitivity.onValueChanged.AddListener(_input.ChangeMouseSensitivity);
+        mouseSensitivity.onValueChanged.AddListener(ChangeMouseSensitivity);
+        ChangeMouseSensitivity(mouseSensitivity.value);
     }
     
     private void Update()
@@ -75,6 +78,27 @@ public class UIMenu : MonoBehaviour
         if(!mainPanel.activeSelf) return;
 
         ChangeVolume();
+    }
+
+    private void LateUpdate()
+    {
+        if (_inputQuery.IsEmptyIgnoreFilter)
+            return;
+
+        var input = _inputQuery.GetSingleton<InputComponent>();
+        if (input.escapePressed)
+            HideOrShow();
+    }
+
+    private void ChangeMouseSensitivity(float value)
+    {
+        if (_inputQuery.IsEmptyIgnoreFilter)
+            return;
+
+        var inputEntity = _inputQuery.GetSingletonEntity();
+        var input = _entityManager.GetComponentData<InputComponent>(inputEntity);
+        input.mouseSensitivityMultiplier = value;
+        _entityManager.SetComponentData(inputEntity, input);
     }
 
     public void ShowMainMenu()
@@ -109,12 +133,7 @@ public class UIMenu : MonoBehaviour
         btnRestart.onClick.RemoveListener(Hide);
         btnExit.onClick.RemoveListener(ExitGame);
         
-        mouseSensitivity.onValueChanged.RemoveListener(_input.ChangeMouseSensitivity);
-    }
-
-    private void OnDestroy()
-    {
-        _input.OnActionEcs -= HideOrShow;
+        mouseSensitivity.onValueChanged.RemoveListener(ChangeMouseSensitivity);
     }
 
     public void Show()

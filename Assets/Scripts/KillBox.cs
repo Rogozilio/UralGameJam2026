@@ -5,6 +5,7 @@ namespace Scripts
     public struct KillBoxTag : IComponentData
     {
     }
+
     public sealed class KillBox : PhysicsMonoEntity
     {
         protected override void Awake()

@@ -26,12 +26,12 @@ namespace Scripts
             _sourceEntity = _entityManager.CreateEntity();
             _entityManager.AddComponentObject(_sourceEntity, new InputSource
             {
-                View = this
+                view = this
             });
             _entityManager.AddComponentData(_sourceEntity, new InputComponent
             {
-                MouseSensitivityMultiplier = 1f,
-                StickSensitivityMultiplier = 1f
+                mouseSensitivityMultiplier = 1f,
+                stickSensitivityMultiplier = 1f
             });
         }
 
