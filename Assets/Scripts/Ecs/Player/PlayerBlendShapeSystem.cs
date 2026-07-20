@@ -31,7 +31,7 @@ namespace UralGameJam.Ecs.Player
             }.Run();
         }
 
-        [WithAll(typeof(PlayerRestartComponent))]
+        [WithAll(typeof(PlayerRespawnComponent))]
         public partial struct RestartBlendShapeJob : IJobEntity
         {
             public void Execute(ref BlendShapeComponent blendShape)

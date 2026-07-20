@@ -118,7 +118,7 @@ namespace UralGameJam.Ecs.Player
             }
         }
 
-        [WithAll(typeof(PlayerRestartComponent))]
+        [WithAll(typeof(PlayerRespawnComponent))]
         public partial struct RestartMovementStateJob : IJobEntity
         {
             public void Execute(EnabledRefRW<PlayerDisableJumpTag> disableJump)
@@ -166,9 +166,14 @@ namespace UralGameJam.Ecs.Player
 
                 if (direction.sqrMagnitude > 0.01f)
                 {
-                    var targetRotation = Quaternion.LookRotation(direction) * Quaternion.Euler(270f, 90f, 0f);
+                    var targetRenderRotation =
+                        Quaternion.LookRotation(direction) * Quaternion.Euler(270f, 90f, 0f);
+                    var targetOwnerRotation =
+                        targetRenderRotation * Quaternion.Inverse(view.restartRenderRotation);
+                    var ownerTransform = view.owner.transform;
 
-                    view.render.rotation = Quaternion.Slerp(view.render.rotation, targetRotation, 15f * deltaTime);
+                    ownerTransform.rotation = Quaternion.Slerp(
+                        ownerTransform.rotation, targetOwnerRotation, 15f * deltaTime);
                 }
 
                 if (movement.jumpBufferCounter > 0f && movement.coyoteTimeCounter > 0f &&
@@ -192,7 +197,7 @@ namespace UralGameJam.Ecs.Player
             }
         }
 
-        [WithAll(typeof(PlayerRestartComponent))]
+        [WithAll(typeof(PlayerRespawnComponent))]
         public partial struct RestartMovementJob : IJobEntity
         {
             public void Execute(DynamicBuffer<AnimatorCommand> animatorCommands, ref PlayerMovementComponent movement)

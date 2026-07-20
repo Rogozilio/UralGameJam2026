@@ -43,7 +43,7 @@ namespace Scripts
                 _entityManager.SetComponentEnabled<T>(_entity, true);
         }
 
-        protected void AddRequest<T>()
+        protected void AddComponent<T>()
             where T : unmanaged, IComponentData
         {
             _entityManager.AddComponent<T>(_entity);

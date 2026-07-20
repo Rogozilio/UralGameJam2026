@@ -52,7 +52,7 @@ namespace UralGameJam.Ecs.Player
             new RestartCameraJob().Run();
         }
 
-        [WithAll(typeof(PlayerRestartComponent))]
+        [WithAll(typeof(PlayerRespawnComponent))]
         public partial struct RestartCameraJob : IJobEntity
         {
             public void Execute(PlayerViewComponent view, ref PlayerCameraComponent camera)
@@ -89,7 +89,7 @@ namespace UralGameJam.Ecs.Player
                 camera.yaw += input.look.x * sensitivity * deltaTime;
                 camera.pitch -= input.look.y * sensitivity * deltaTime;
                 camera.pitch = Mathf.Clamp(camera.pitch, camera.pitchMin, camera.pitchMax);
-                view.cameraTarget.localRotation = Quaternion.Euler(
+                view.cameraTarget.rotation = Quaternion.Euler(
                     camera.pitch,
                     camera.yaw,
                     0f);

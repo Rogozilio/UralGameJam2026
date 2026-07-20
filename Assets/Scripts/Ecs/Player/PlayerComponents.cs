@@ -18,6 +18,7 @@ namespace UralGameJam.Ecs.Player
         public static readonly int IsClimb = Animator.StringToHash("isClimb");
         public static readonly int ClimbState = Animator.StringToHash("Climb");
         public static readonly int DieState = Animator.StringToHash("Die");
+        public static readonly int Respawn = Animator.StringToHash("Respawn");
     }
 
     public struct PlayerTag : IComponentData
@@ -229,17 +230,22 @@ namespace UralGameJam.Ecs.Player
 
     #endregion
 
-    #region PlayerRestartSystem
+    #region PlayerRespawnSystem
 
     public struct PlayerFinishRespawnRequest : IComponentData
     {
     }
 
-    public struct PlayerRestartComponent : IComponentData, IEnableableComponent
+    public struct PlayerRespawnComponent : IComponentData, IEnableableComponent
     {
         public Vector3 position;
         public Quaternion rotation;
         public Quaternion renderRotation;
+    }
+
+    public class SpawnBoxComponent : IComponentData
+    {
+        public Transform target;
     }
 
     #endregion

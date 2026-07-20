@@ -133,7 +133,7 @@ namespace UralGameJam.Ecs.Player
         {
             public EntityCommandBuffer ecb;
 
-            public void Execute(Entity entity, EnabledRefRO<PlayerRestartComponent> restartEnabled,
+            public void Execute(Entity entity, EnabledRefRO<PlayerRespawnComponent> restartEnabled,
                 ref LifeTimeComponent lifeTime, EnabledRefRW<LifeTimeComponent> lifeTimeEnabled,
                 EnabledRefRW<LifeTimePausedTag> lifeTimePaused)
             {
@@ -162,9 +162,7 @@ namespace UralGameJam.Ecs.Player
 
                 var multiplier = lifeTime.isFastTime ? fastTimeMultiplier : 1f;
                 lifeTime.remainingTime = math.clamp(
-                    lifeTime.remainingTime - fixedDeltaTime * multiplier,
-                    0f,
-                    lifeTime.duration);
+                    lifeTime.remainingTime - fixedDeltaTime * multiplier, 0f, lifeTime.duration);
             }
         }
 
@@ -227,14 +225,14 @@ namespace UralGameJam.Ecs.Player
         }
 
         [WithAll(typeof(PlayerDeathTag))]
-        [WithDisabled(typeof(PlayerRestartComponent))]
+        [WithDisabled(typeof(PlayerRespawnComponent))]
         public partial struct DeathProgressJob : IJobEntity
         {
             [ReadOnly] public float deltaTime;
 
             public void Execute(PlayerViewComponent view, ref PlayerDeathComponent death,
                 ref BlendShapeComponent blendShape, EnabledRefRW<PlayerDeathTag> deathEnabled,
-                EnabledRefRW<PlayerRestartComponent> restartEnabled)
+                EnabledRefRW<PlayerRespawnComponent> restartEnabled)
             {
                 death.elapsed += deltaTime;
                 ApplyDissolve(view, ref death, blendShape);

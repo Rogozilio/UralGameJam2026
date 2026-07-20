@@ -125,7 +125,9 @@ namespace UralGameJam.Ecs.Player
                 animatorCommands.Add(AnimatorCommand.CrossFade(PlayerAnimatorHashes.ClimbState, 0.1f));
                 view.owner.transform.position = GetPointClimb(target.startPosition, target.startRight, target.range,
                     view.owner.transform.position);
-                view.render.rotation = target.startRotation * Quaternion.Euler(270f, 90f, 0f);
+                var targetRenderRotation = target.startRotation * Quaternion.Euler(270f, 90f, 0f);
+                view.owner.transform.rotation =
+                    targetRenderRotation * Quaternion.Inverse(view.restartRenderRotation);
                 
                 ResetMovementState(ref movement, input.jumpHeld);
             }
@@ -179,7 +181,7 @@ namespace UralGameJam.Ecs.Player
             movement.blockJumpUntilRelease = blockJumpUntilRelease;
         }
         
-        [WithAll(typeof(PlayerRestartComponent))]
+        [WithAll(typeof(PlayerRespawnComponent))]
         public partial struct RestartClimbJob : IJobEntity
         {
             public EntityCommandBuffer ecb;

@@ -184,17 +184,17 @@ public class Player : PhysicsMonoEntity, IRestart
 
     public void Restart()
     {
-        EnableComponent<PlayerRestartComponent>();
+        EnableComponent<PlayerRespawnComponent>();
     }
 
     public void FinishClimb()
     {
-        AddRequest<PlayerFinishClimbRequest>();
+        AddComponent<PlayerFinishClimbRequest>();
     }
 
     public void FinishRespawn()
     {
-        AddRequest<PlayerFinishRespawnRequest>();
+        AddComponent<PlayerFinishRespawnRequest>();
     }
 
     public void PauseLifeTimer()
