@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Scripts
 {
-    public class ClimbData : PhysicsMonoEntity
+    public class ClimbData : MonoEntity
     {
         public Transform startClimb;
         public Transform finishClimb;

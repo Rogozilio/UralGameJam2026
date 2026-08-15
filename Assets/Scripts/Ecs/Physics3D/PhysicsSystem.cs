@@ -1,3 +1,4 @@
+using Scripts;
 using UralGameJam.Ecs.Animation;
 using Unity.Entities;
 using UnityEngine;
@@ -54,20 +55,13 @@ namespace UralGameJam.Ecs.Physics3D
         }
     }
 
-    public sealed class ColliderAndTriggerDOTSProvider : MonoBehaviour
+    public sealed class ColliderProvider : MonoEntity
     {
-        private Entity _entityA;
-        private EntityManager _entityManager;
         private Entity _bufferTriggerEntity;
-
-        public Entity entityA
-        {
-            set => _entityA = value;
-            get => _entityA;
-        }
+        
         private void Awake()
         {
-            _entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
+            base.Awake();
 
             var query = _entityManager.CreateEntityQuery(ComponentType.ReadOnly<PhysicsEventTriggerComponent>());
 
@@ -88,27 +82,27 @@ namespace UralGameJam.Ecs.Physics3D
 
         private void OnTriggerEnter(Collider other)
         {
-            if(other.TryGetComponent<ColliderAndTriggerDOTSProvider>(out var value))
-                AddTriggerToBuffer(value.entityA, false);
+            if(other.TryGetComponent<ColliderReceiver>(out var value))
+                AddTriggerToBuffer(value.entity, false);
             
         }
 
         private void OnTriggerExit(Collider other)
         {
-            if(other.TryGetComponent<ColliderAndTriggerDOTSProvider>(out var value))
-                AddTriggerToBuffer(value.entityA, true);
+            if(other.TryGetComponent<ColliderReceiver>(out var value))
+                AddTriggerToBuffer(value.entity, true);
         }
 
         private void OnCollisionEnter(Collision other)
         {
-            if(other.transform.TryGetComponent<ColliderAndTriggerDOTSProvider>(out var value))
-                AddCollideToBuffer(value.entityA, false);
+            if(other.transform.TryGetComponent<ColliderReceiver>(out var value))
+                AddCollideToBuffer(value.entity, false);
         }
         
         private void OnCollisionExit(Collision other)
         {
-            if(other.transform.TryGetComponent<ColliderAndTriggerDOTSProvider>(out var value))
-                AddCollideToBuffer(value.entityA, true);
+            if(other.transform.TryGetComponent<ColliderReceiver>(out var value))
+                AddCollideToBuffer(value.entity, true);
         }
 
         private void AddTriggerToBuffer(Entity entityB, bool isExit)
@@ -116,7 +110,7 @@ namespace UralGameJam.Ecs.Physics3D
             var buffer = _entityManager.GetBuffer<PhysicsEventTriggerComponent>(_bufferTriggerEntity);
             buffer.Add(new PhysicsEventTriggerComponent
             {
-                entityA = _entityA,
+                entityA = _entity,
                 entityB = entityB,
                 isExit = isExit
             });
@@ -127,11 +121,16 @@ namespace UralGameJam.Ecs.Physics3D
             var buffer = _entityManager.GetBuffer<PhysicsEventCollideComponent>(_bufferTriggerEntity);
             buffer.Add(new PhysicsEventCollideComponent
             {
-                entityA = _entityA,
+                entityA = _entity,
                 entityB = entityB,
                 isExit = isExit
             });
         }
+    }
+
+    public class ColliderReceiver : MonoEntity
+    {
+        public Entity entity => _entity;
     }
 
     [UpdateInGroup(typeof(PresentationSystemGroup), OrderLast = true)]

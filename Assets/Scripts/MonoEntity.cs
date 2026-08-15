@@ -1,5 +1,6 @@
 using Unity.Entities;
 using UnityEngine;
+using UralGameJam.Ecs.Physics3D;
 
 namespace Scripts
 {
@@ -15,6 +16,14 @@ namespace Scripts
                 : gameObject.AddComponent<GeneralEntity>().GetOrCreate();
             
             _entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
+
+            //Collider provider
+            if (TryGetComponent<CharacterController>(out _) && !TryGetComponent<ColliderProvider>(out _))
+                gameObject.AddComponent<ColliderProvider>();
+            
+            //Collider receiver
+            if (TryGetComponent<Collider>(out _) && !TryGetComponent<ColliderReceiver>(out _))
+                gameObject.AddComponent<ColliderReceiver>();
         }
 
         protected void RemoveComponent<T>() where T : IComponentData

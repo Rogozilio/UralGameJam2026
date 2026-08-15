@@ -6,7 +6,7 @@ namespace Scripts
     {
     }
 
-    public sealed class KillBox : PhysicsMonoEntity
+    public sealed class KillBox : MonoEntity
     {
         protected override void Awake()
         {

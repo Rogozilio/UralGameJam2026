@@ -8,7 +8,7 @@ using UralGameJam.Ecs.Player;
 using UralGameJam.Ecs.Restart;
 
 [RequireComponent(typeof(AnimatorEntity))]
-public class Player : PhysicsMonoEntity, IRestart
+public class Player : MonoEntity, IRestart
 {
     public Transform render;
     public CharacterController characterController;
