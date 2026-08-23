@@ -282,4 +282,25 @@ namespace UralGameJam.Ecs.Player
     }
 
     #endregion
+
+    #region AreaRefire
+
+    public struct StartFireTag : IComponentData
+    {
+    }
+
+    public struct EndFireTag : IComponentData
+    {
+    }
+
+    public struct AreaRefireTag : IComponentData
+    {
+    }
+    
+    public struct AreaRefireComponent : IComponentData
+    {
+        
+    }
+
+    #endregion
 }

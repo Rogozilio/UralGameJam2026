@@ -5,7 +5,7 @@ using UralGameJam.Ecs.Game;
 
 namespace UralGameJam.Ecs.Player
 {
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(SimulationSystemGroup))]
     public sealed partial class PlayerCameraSystem : SystemBase
     {
         protected override void OnCreate()

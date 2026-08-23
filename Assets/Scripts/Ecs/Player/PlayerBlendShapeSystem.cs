@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace UralGameJam.Ecs.Player
 {
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(SimulationSystemGroup))]
     [UpdateAfter(typeof(PlayerDeathSystem))]
     public sealed partial class PlayerBlendShapeSystem : SystemBase
     {
@@ -80,9 +80,6 @@ namespace UralGameJam.Ecs.Player
 
             private static void ApplyBlendShapes(BlendShapeViewComponent view, BlendShapeComponent blendShape)
             {
-                if (view.skinnedMeshRenderers == null)
-                    return;
-
                 var minus = 0;
 
                 foreach (var renderer in view.skinnedMeshRenderers)

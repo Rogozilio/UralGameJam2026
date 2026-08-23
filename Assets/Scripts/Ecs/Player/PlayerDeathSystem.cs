@@ -8,7 +8,7 @@ using UralGameJam.Ecs.Physics3D;
 
 namespace UralGameJam.Ecs.Player
 {
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(SimulationSystemGroup))]
     [UpdateAfter(typeof(PlayerMovementSystem))]
     [UpdateBefore(typeof(PlayerBlendShapeSystem))]
     public sealed partial class PlayerDeathSystem : SystemBase

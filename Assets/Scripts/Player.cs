@@ -171,6 +171,9 @@ public class Player : MonoEntity, IRestart
 
         if (fire == null)
             throw new MissingReferenceException($"{nameof(Player)}.{nameof(fire)} is not assigned on {name}");
+        
+        if(skinnedMeshRenderers?.Length == 0)
+            throw new MissingReferenceException($"{nameof(Player)}.{nameof(skinnedMeshRenderers)} is not assigned on {name}");
     }
 
     private void OnDestroy()

@@ -6,7 +6,7 @@ using UralGameJam.Ecs.Animation;
 
 namespace UralGameJam.Ecs.Player
 {
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(SimulationSystemGroup))]
     [UpdateBefore(typeof(PlayerCameraSystem))]
     public sealed partial class PlayerRespawnSystem : SystemBase
     {

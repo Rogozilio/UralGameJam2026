@@ -6,7 +6,7 @@ using Object = UnityEngine.Object;
 
 namespace UralGameJam.Ecs.Player
 {
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(SimulationSystemGroup))]
     [UpdateAfter(typeof(PlayerDeathSystem))]
     public sealed partial class PlayerAshSpawnerSystem : SystemBase
     {
