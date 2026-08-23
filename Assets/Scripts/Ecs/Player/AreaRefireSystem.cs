@@ -1,6 +1,6 @@
 using Unity.Burst;
 using Unity.Entities;
-using Unity.Jobs;
+using UralGameJam.Ecs.Animation;
 using UralGameJam.Ecs.Physics3D;
 
 namespace UralGameJam.Ecs.Player
@@ -55,8 +55,11 @@ namespace UralGameJam.Ecs.Player
         public partial struct StartFirePlayerJob : IJobEntity
         {
             public EntityCommandBuffer ecb;
-            public void Execute(Entity entity, ref BlendShapeComponent blendShape, BlendShapeViewComponent view)
+            public void Execute(Entity entity, ref BlendShapeComponent blendShape, 
+                DynamicBuffer<AnimatorCommand> animatorCommands, BlendShapeViewComponent view)
             {
+                animatorCommands.Add(AnimatorCommand.SetBool(PlayerAnimatorHashes.IsIdleFire, true));
+                
                 ecb.SetComponentEnabled<LifeTimePausedTag>(entity, false);
                 view.fire.Play();
                 
@@ -69,8 +72,11 @@ namespace UralGameJam.Ecs.Player
         public partial struct EndFirePlayerJob : IJobEntity
         {
             public EntityCommandBuffer ecb;
-            public void Execute(Entity entity, ref BlendShapeComponent blendShape, ref LifeTimeComponent liefTime, BlendShapeViewComponent view)
+            public void Execute(Entity entity, ref BlendShapeComponent blendShape, ref LifeTimeComponent liefTime,
+                DynamicBuffer<AnimatorCommand> animatorCommands, BlendShapeViewComponent view)
             {
+                animatorCommands.Add(AnimatorCommand.SetBool(PlayerAnimatorHashes.IsIdleFire, false));
+                
                 liefTime.remainingTime = liefTime.duration;
                 
                 ecb.SetComponentEnabled<LifeTimePausedTag>(entity, true);
